@@ -21,12 +21,10 @@ class plotGUI:
         self.frmStyle.configure('my.TFrame', background='black')
         self.frm = Frame(self.master, style='my.TFrame', padding='0.5i')
         self.frm.place(in_=self.master, anchor='center', relx=.5, rely=.5)
-        #self.frm.grid(column=0, row=1)
 
         self.titleframe = Frame(self.master, style='my.TFrame', padding='0.5i')
         self.titleframe.place(in_=self.master, anchor='center', relx=.5, rely=.2)
-        #self.titleframe.grid(column=0, row=0)
-
+        
         #===============================HARRY STYLES========================================================
         self.butStyle = Style()
         self.butStyle.theme_use('classic')
@@ -92,6 +90,8 @@ class plotGUI:
     #==================================FUNC=================================================================
 
     def scatter(self):
+        """Scatters  Power / uW as a function of current / mA"""
+
         if not self.multiVar.get():
             try:
                 plt.scatter(self.currentList, self.measList, marker='o', s=10, c=self.mColor)
@@ -116,6 +116,7 @@ class plotGUI:
                 print(e)
 
     def setColor(self, event=None):
+        """Pretty colors for scatterplot yes :)"""
         self.mColor = self.colorEn.get()
         self.colorLabel.config(text=self.mColor)
         self.colorEn.delete(0, 'end')
@@ -128,7 +129,9 @@ class plotGUI:
         self.clearDataBut.configure(state='disabled')
 
     def readMeas(self):
-        """Reads current in mA, meas and 2*std in uW"""
+        """Reads current in mA, power and 2*std in uW.\n
+        Deletes first row of file and assumes ', ' separator"""
+        
         if not self.multiVar.get():
             fileName = askopenfilename()
             with open(fileName, 'r') as file:
