@@ -7,6 +7,7 @@ from tkinter import Tk, IntVar
 class plotGUI:
     def __init__(self, master) -> None:
         self.master = master
+        self.master.attributes('-fullscreen', True)
         self.master.title("Harry Plotter")
         self.master.configure(background='black')
         self.currentList = []
@@ -19,10 +20,12 @@ class plotGUI:
         self.frmStyle.theme_use('classic')
         self.frmStyle.configure('my.TFrame', background='black')
         self.frm = Frame(self.master, style='my.TFrame', padding='0.5i')
-        self.frm.grid(column=0, row=1)
+        self.frm.place(in_=self.master, anchor='center', relx=.5, rely=.5)
+        #self.frm.grid(column=0, row=1)
 
         self.titleframe = Frame(self.master, style='my.TFrame', padding='0.5i')
-        self.titleframe.grid(column=0, row=0)
+        self.titleframe.place(in_=self.master, anchor='center', relx=.5, rely=.2)
+        #self.titleframe.grid(column=0, row=0)
 
         #===============================HARRY STYLES========================================================
         self.butStyle = Style()
