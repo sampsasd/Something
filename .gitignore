@@ -1,3 +1,7 @@
 *.dat
 plots/*
 *.png
+!on.png
+!off.png
+*.csv
+Data/*
