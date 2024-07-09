@@ -27,6 +27,7 @@ class isweepGUI:
     def __init__(self, master) -> None:
         
         self.master = master
+        self.master.attributes('-fullscreen', True)
         self.master.configure(background='lightgrey')
         self.instr = None
         self.isOn = None
@@ -34,7 +35,7 @@ class isweepGUI:
         self.off = None
         self.running = False
         self.pmAver = 1
-        self.wl = 420
+        self.wl = 275
         self.master.title("Keithley 220 Current Sweep")
 
         self.fStyle = Style()
