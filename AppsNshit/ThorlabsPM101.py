@@ -13,6 +13,7 @@ from time import time, sleep
 class thorlabsGUI:
     def __init__(self, master):
         self.master = master
+        self.master.attributes('-fullscreen', True)
         self.master.title('Thorlabs PM101')
         self.master.configure(background='black')
         self.pmAver = 1
@@ -149,6 +150,7 @@ class thorlabsGUI:
         except Exception as e:
             print(e)
             self.errorLab = Label(self.frm, text='No device').grid(column=0, row=0)
+            self.close = Button(self.frm, text='Close', command=self.master.quit).grid(column=0, row=1)
     
     def toggle(self):
         if self.showVar.get() == 0:

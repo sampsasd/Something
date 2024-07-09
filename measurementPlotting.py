@@ -68,7 +68,7 @@ class plotGUI:
         self.clearDataBut.grid(column=0, row=2)
 
         self.destructionBut = Button(self.frm, text='Close', style='my.TButton', command=self.DESTRUCTION)
-        self.destructionBut.grid(column=0, row=10, padx=20, pady=20)
+        self.destructionBut.grid(column=0, row=100, padx=20, pady=20)
 
         self.colorLab = Label(self.frm, text='Color:', style='my.TLabel')
         self.colorLab.grid(column=1, row=0, padx=10, pady=10)
@@ -80,11 +80,11 @@ class plotGUI:
 
         self.twinxVar = IntVar(value=0)
         self.twinxCheck = Checkbutton(self.frm, text='Twinx', style='my.TCheckbutton', variable=self.twinxVar, onvalue=1, offvalue=0)
-        self.twinxCheck.grid(column=1, row=10, padx=10, pady=10)
+        self.twinxCheck.grid(column=1, row=1, padx=10, pady=10)
 
         self.errorVar = IntVar(value=0)
         self.errorCheck = Checkbutton(self.frm, text='Errorbar', variable=self.errorVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.errorCheck.grid(column=2, row=10, padx=10, pady=10)
+        self.errorCheck.grid(column=2, row=1, padx=10, pady=10)
 
         self.scatterBut = Button(self.frm, text='Scatter', style='my.TButton', command=self.scatter)
         self.scatterBut.grid(column=5, row=0, padx=10, pady=10)
