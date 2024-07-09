@@ -1,0 +1,15 @@
+{
+    "Help": "Set current e.g. I10E-6X\nSet voltage limit e.g. V6X",
+    "Output off": "F0X",
+    "Output on": "F1X",
+    "Range 100mA": "R9X",
+    "Range 100nA": "R3X",
+    "Range 100uA": "R6X",
+    "Range 10mA": "R8X",
+    "Range 10nA": "R2X",
+    "Range 10uA": "R5X",
+    "Range 1mA": "R7X",
+    "Range 1nA": "R1X",
+    "Range 1uA": "R4X",
+    "Range auto": "R0X"
+}
