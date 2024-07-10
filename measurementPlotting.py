@@ -133,7 +133,7 @@ class plotGUI:
         Deletes first row of file and assumes ', ' separator"""
         
         if not self.multiVar.get():
-            fileName = askopenfilename()
+            fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
             with open(fileName, 'r') as file:
                 for row in file:
                     points = row.strip().split(', ')
@@ -150,7 +150,7 @@ class plotGUI:
             
             self.clearDataBut.configure(state='normal')
         if self.multiVar.get():
-            fileNameList = askopenfilenames()
+            fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
             for i in range(len(fileNameList)):
                 currTemp = []
                 measTemp = []
