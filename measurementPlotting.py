@@ -111,6 +111,8 @@ class plotGUI:
                     for key in self.filesDict:
                         plt.scatter(self.filesDict[key][0], self.filesDict[key][1], marker='o', s=10, c=self.mColor)
                         plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
+                plt.xlabel('Current / mA')
+                plt.ylabel('Power / $\\mathrm{\\mu}$W')
                 plt.show()
             except Exception as e:
                 print(e)

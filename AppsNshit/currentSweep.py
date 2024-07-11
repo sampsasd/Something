@@ -138,7 +138,7 @@ class isweepGUI:
             self.isOn = False
 
         #DARKMODE
-        self.darkmode = tk.IntVar(value=1)
+        self.darkmode = tk.IntVar(value=0)
         self.dmCheck = Checkbutton(self.frm, text='Darkmode', variable=self.darkmode, onvalue=1, offvalue=0, command=self.toggleDm, style='my.TCheckbutton')
         self.dmCheck.grid(column=0, row=6, pady=10)
         

@@ -13,7 +13,7 @@ from time import time, sleep
 class thorlabsGUI:
     def __init__(self, master):
         self.master = master
-        self.master.attributes('-fullscreen', True)
+        #self.master.attributes('-fullscreen', True)
         self.master.title('Thorlabs PM101')
         self.master.configure(background='black')
         self.pmAver = 1
@@ -42,16 +42,16 @@ class thorlabsGUI:
 
         self.butStyle = Style()
         self.butStyle.theme_use('alt')
-        self.butStyle.configure(style='my.TButton', font=('Helvetica', 12), background='black', foreground='red')
+        self.butStyle.configure(style='my.TButton', font=('Helvetica', 18), background='black', foreground='red')
         self.butStyle.map('TButton', background=[('active', 'red')], foreground=[('active', 'black')])
         self.enStyle = Style()
         self.enStyle.theme_use('alt')
         self.enStyle.configure("my.TEntry", background='black', foreground='black')
         self.labStyle = Style()
-        self.labStyle.configure(style='my.TLabel', font=('Helvetica', 12), background='black', foreground='red')
+        self.labStyle.configure(style='my.TLabel', font=('Helvetica', 18), background='black', foreground='red')
         self.checkStyle = Style()
         self.checkStyle.theme_use('alt')
-        self.checkStyle.configure(style='my.TCheckbutton', background='black', foreground='red')
+        self.checkStyle.configure(style='my.TCheckbutton', font=('Helvetica', 18), background='black', foreground='red')
 
         try:
             self.pm1 = self.rm.open_resource('USB0::0x1313::0x8076::M00904927::INSTR')
@@ -244,10 +244,10 @@ class thorlabsGUI:
                         self.ax.clear()
                         self.ax.set_ylabel("Power / W")
                         self.ax.set_xlabel("Time / s")
-                        self.ax.yaxis.label.set_color('royalblue')
-                        self.ax.xaxis.label.set_color('royalblue')
-                        self.ax.tick_params(axis='x', colors='royalblue')
-                        self.ax.tick_params(axis='y', colors='royalblue')
+                        self.ax.yaxis.label.set_color('red')
+                        self.ax.xaxis.label.set_color('red')
+                        self.ax.tick_params(axis='x', colors='red')
+                        self.ax.tick_params(axis='y', colors='red')
                         list(self.ax.collections).clear()
                         self.sc = self.ax.scatter(self.xdata[self.getIndex():], self.ydata[self.getIndex():], color='red')
                         self.canvas.draw()
@@ -298,10 +298,10 @@ class thorlabsGUI:
         self.ax.clear()
         self.ax.set_ylabel("Power / W")
         self.ax.set_xlabel('Time / s')
-        self.ax.yaxis.label.set_color('royalblue')
-        self.ax.xaxis.label.set_color('royalblue')
-        self.ax.tick_params(axis='x', colors='royalblue')
-        self.ax.tick_params(axis='y', colors='royalblue')
+        self.ax.yaxis.label.set_color('red')
+        self.ax.xaxis.label.set_color('red')
+        self.ax.tick_params(axis='x', colors='red')
+        self.ax.tick_params(axis='y', colors='red')
         self.sc = self.ax.scatter(self.xdata, self.ydata, color='red')
         if self.running:
             self.timeStart = time()
