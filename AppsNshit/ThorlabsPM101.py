@@ -17,7 +17,7 @@ class thorlabsGUI:
         self.master.title('Thorlabs PM101')
         self.master.configure(background='black')
         self.pmAver = 1
-        self.wl = 420
+        self.wl = 450
         self.running = False
         self.xAxisLen = 20
         self.darkmode = Style()
@@ -109,6 +109,8 @@ class thorlabsGUI:
 
             #DISCARD
             self.discBut = Button(self.frm, text='Discard', style='my.TButton', command=self.discard)
+            if len(self.measList) == 0:
+                self.discBut.configure(state='disabled')
 
             #SAVE
             self.saveBut = Button(self.frm, text='Save', command=self.save, style='my.TButton')
@@ -291,6 +293,8 @@ class thorlabsGUI:
         self.measList.append(meas)
         self.stdList.append(std)
         self.measBut.config(state='normal')
+        if len(self.measList) != 0:
+            self.discBut.configure(state='normal')
 
     def clear(self):
         self.xdata = []
@@ -316,6 +320,7 @@ class thorlabsGUI:
         self.currentList = []
         self.measList = []
         self.stdList = []
+        self.discBut.configure(state='disabled')
 
     def save(self):
         filename = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
