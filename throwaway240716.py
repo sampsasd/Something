@@ -34,6 +34,9 @@ def main():
     for i in range(len(read[0][1])):
         powerDict[i] = [[read[key][1][i] for key in read], [read[key][2][i] for key in read]]
 
+    anglelist2 = []
+    
+
     #popt, pcov = curve_fit(gaussian, angleList[:-1], powerDict[7][0][:-1], p0=[60, 0, 10, 0])
     #print(popt, pcov)
     #linAng = np.linspace(0, 90, 100)
