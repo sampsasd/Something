@@ -6,7 +6,7 @@ import matplotlib.ticker as ticker
 
 
 def readMeas(fileNameList:list):
-    """Reads current in mA, power and 2*std in uW.\n
+    """Returns dict of current in mA, power and 2*std in uW. Keys are 0, 1, 2, ...\n
     Deletes first row of file and assumes ', ' separator"""
     filesDict = {}
     #fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
