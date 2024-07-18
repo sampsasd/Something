@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tkinter.filedialog import askopenfilename, askopenfilenames
 import matplotlib.ticker as ticker
-from throwaway1 import readMeas
+from functions import readMeas, gaussian
+from scipy.optimize import curve_fit
 
 
 def main():
@@ -33,11 +34,21 @@ def main():
     for i in range(len(read[0][1])):
         powerDict[i] = [[read[key][1][i] for key in read], [read[key][2][i] for key in read]]
 
-    for key in powerDict:
-        plt.scatter(angleList[:], powerDict[key][0][:], c='mediumorchid', s=10)
-    plt.xlabel('Angle / deg')
+    #popt, pcov = curve_fit(gaussian, angleList[:-1], powerDict[7][0][:-1], p0=[60, 0, 10, 0])
+    #print(popt, pcov)
+    #linAng = np.linspace(0, 90, 100)
+    #line = gaussian(linAng, *popt)
+    labels = ['10 mA', '15 mA', '20 mA', '25 mA', '30 mA']
+    colors = ['tomato', 'gold', 'mediumseagreen', 'cornflowerblue', 'mediumorchid']
+    for i in range(5):
+        plt.scatter(angleList[:-1], powerDict[3 + i][0][:-1], c=colors[i], s=15, label=labels[i])
+    #plt.plot(linAng, line)
+    plt.title('Blue laser\n40 $\\mathrm{\\mu}$g / cm$^{2}$ coating')
+    plt.xlabel('Angle from specular / deg')
     plt.ylabel('Power / $\\mathrm{\\mu}$W')
+    plt.legend()
     plt.show()
+
 
 if __name__ == '__main__':
     main()
