@@ -111,7 +111,11 @@ class coatingPlotter:
 
             f_i = np.amax(self.freq)
             self.deltaF = [(point - f_i)*1E-3 for point in self.freq]
-            self.finalDeltaF = f_i - np.amin(self.freq)
+            if len(self.freq) % 2 == 0:
+                self.finalDeltaF = f_i - np.amin(np.split(self.freq, 2)[1])
+            else:
+                self.freq2 = np.delete(self.freq, 0)
+                self.finalDeltaF = f_i - np.amin(np.split(self.freq2, 2)[1])
             self.sDens = self.finalDeltaF * 17.7e-9
             
             self.clearBut.configure(state='normal')
