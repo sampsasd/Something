@@ -31,6 +31,7 @@ class thorlabsGUI:
         self.measList = []
         self.stdList = []
         self.laser = '-'
+        self.autoLaser = True
 
         self.frm = Frame(self.master, padding='1i', style='my.TFrame')
         self.frm.grid(column=0, row=0)
@@ -102,7 +103,7 @@ class thorlabsGUI:
             self.laserLab = Label(self.frm, text='Laser current: ', style='my.TLabel')
             self.laserEn = Entry(self.frm, background='dimgrey', style='my.TEntry')
             self.laserEn.bind('<Return>', self.laserI)
-            self.laserLabel = Label(self.frm, text=f'{self.laser} A', style='my.TLabel')
+            self.laserLabel = Label(self.frm, text=f'{self.laser} mA', style='my.TLabel')
 
             #MEASURE
             self.measBut = Button(self.frm, text='Measure', style='my.TButton', command=self.measure)
@@ -207,8 +208,10 @@ class thorlabsGUI:
         self.wlEn.delete(0, 'end')
     
     def DESTRUCTION(self):
+        self.running = False
+        sleep(0.5)
         self.pm1.close()
-        sleep(1)
+        sleep(0.5)
         self.master.quit()
     
     def update_plot(self, frame):
@@ -280,16 +283,23 @@ class thorlabsGUI:
         self.timePaused = time()
 
     def laserI(self, event=None):
-        self.laser = float(self.laserEn.get())
-        self.laserLabel.config(text=f'{self.laser} A')
-        self.laserEn.delete(0, 'end')
+        if self.laser == '-':
+            self.autoLaser = True
+        else:
+            self.autoLaser = False
+            self.laser = float(self.laserEn.get()) * 1e-3
+            self.laserLabel.config(text=f'{self.laser * 1e3} mA')
+            self.laserEn.delete(0, 'end')
 
     def measure(self):
         self.measBut.config(state='disabled')
         measTemp = np.array([self.powermeter.read for i in range(self.pmAver)])
         meas = measTemp.mean()
         std = measTemp.std()
-        self.currentList.append(self.laser)
+        if self.autoLaser:
+            self.currentList = [0, 1e-3, 5e-3, 10e-3, 15e-3, 20e-3, 25e-3, 30e-3]
+        else:
+            self.currentList.append(self.laser)
         self.measList.append(meas)
         self.stdList.append(std)
         self.measBut.config(state='normal')
