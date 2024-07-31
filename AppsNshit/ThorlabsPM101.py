@@ -31,7 +31,7 @@ class thorlabsGUI:
         self.measList = []
         self.stdList = []
         self.laser = '-'
-        self.autoLaser = True
+        self.autoLaser = False
 
         self.frm = Frame(self.master, padding='1i', style='my.TFrame')
         self.frm.grid(column=0, row=0)
@@ -283,21 +283,20 @@ class thorlabsGUI:
         self.timePaused = time()
 
     def laserI(self, event=None):
-        if self.laser == '-':
-            self.autoLaser = True
-        else:
-            self.autoLaser = False
-            self.laser = float(self.laserEn.get()) * 1e-3
-            self.laserLabel.config(text=f'{self.laser * 1e3} mA')
-            self.laserEn.delete(0, 'end')
+        self.autoLaser = False
+        self.laser = float(self.laserEn.get()) * 1e-3
+        self.laserLabel.config(text=f'{self.laser * 1e3} mA')
+        self.laserEn.delete(0, 'end')
 
     def measure(self):
+        if self.laser == '-':
+            self.autoLaser = True
         self.measBut.config(state='disabled')
         measTemp = np.array([self.powermeter.read for i in range(self.pmAver)])
         meas = measTemp.mean()
         std = measTemp.std()
         if self.autoLaser:
-            self.currentList = [0, 1e-3, 5e-3, 10e-3, 15e-3, 20e-3, 25e-3, 30e-3]
+            self.currentList = [0, 5e-3, 15e-3, 30e-3]
         else:
             self.currentList.append(self.laser)
         self.measList.append(meas)

@@ -8,7 +8,7 @@ import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from functions import gaussian
+from functions import gaussian, GnL
 
 class apGUI:
     def __init__(self, master) -> None:
@@ -115,9 +115,9 @@ class apGUI:
                     self.fitDict = {}
                     for key in self.measDict:
                         try:
-                            popt, pcov = curve_fit(gaussian, self.angleList, self.measDict[key], p0=[max(self.measDict[key]), 0, 10, 0])
+                            popt, pcov = curve_fit(GnL, self.angleList, self.measDict[key], p0=[max(self.measDict[key]), 0, 10, (max(self.measDict[key])*0.01)])
                             angs = np.linspace(-20, 120, 1000)
-                            fit = gaussian(angs, *popt)
+                            fit = GnL(angs, *popt)
                             self.fitDict[key] = [angs, fit, popt, pcov]
                             print(popt, '\n', pcov)
                         except Exception as e:
@@ -138,17 +138,17 @@ class apGUI:
                         self.measDict2[key] = self.measDict[key].copy()
                         self.measDict2[key].remove(self.measDict2[key][0])
                         try:
-                            popt, pcov = curve_fit(gaussian, self.angleList2, self.measDict2[key], p0=[(max(self.measDict2[key])+(max(self.measDict2[key])*0.4)), 0, 10, 0])
+                            popt, pcov = curve_fit(GnL, self.angleList2, self.measDict2[key], p0=[(max(self.measDict2[key])+(max(self.measDict2[key])*0.4)), 0, 10, (max(self.measDict2[key])*0.01)])
                             angs = np.linspace(-20, 120, 1000)
-                            fit = gaussian(angs, *popt)
+                            fit = GnL(angs, *popt)
                             self.fitDict2[key] = [angs, fit, popt, pcov]
                             print(popt, '\n', pcov)
                         except Exception as e:
                             print(e)
                             continue
                     #for key in self.measDict:
-                    plt.scatter(self.angleList, self.measDict[20], color='mediumorchid')
-                    plt.plot(self.fitDict2[20][0], self.fitDict2[20][1])
+                    plt.scatter(self.angleList, self.measDict[15], color='mediumorchid')
+                    plt.plot(self.fitDict2[15][0], self.fitDict2[15][1])
                     plt.xlabel('Angle from specular / deg')
                     plt.ylabel('Power / $\\mathrm{\\mu}$W')
                     plt.show()

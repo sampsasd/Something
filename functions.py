@@ -6,6 +6,9 @@ import matplotlib.ticker as ticker
 def gaussian(x, a, x0, sig, h):
     return a * np.exp(-(x - x0)**2 / (2 * sig**2)) + h
 
+def GnL(x, a, x0, sig, b):
+    return a * np.exp(-(x - x0)**2 / (2 * sig**2)) + b * np.cos(np.pi * (x - 40) / 180)
+
 def readMeas(fileNameList:list):
     """Returns dict of current in mA, power and 2*std in uW. Keys are 0, 1, 2, ...\n
     Deletes first row of file and assumes ', ' separator"""
