@@ -6,8 +6,14 @@ import matplotlib.ticker as ticker
 def gaussian(x, a, x0, sig, h):
     return a * np.exp(-(x - x0)**2 / (2 * sig**2)) + h
 
+def doubleGaussian(x, a0, x0, sig0, a1, x1, sig1, h):
+    return a0 * np.exp(-(x - x0)**2 / (2 * sig0**2)) + a1 * np.exp(-(x - x1)**2 / (2 * sig1**2)) + h
+
 def GnL(x, a, x0, sig, b):
     return a * np.exp(-(x - x0)**2 / (2 * sig**2)) + b * np.cos(np.pi * (x - 40) / 180)
+
+def dGnL(x, a0, x0, sig0, a1, x1, sig1, b):
+    return a0 * np.exp(-(x - x0)**2 / (2 * sig0**2)) + a1 * np.exp(-(x - x1)**2 / (2 * sig1**2)) + b * np.cos(np.pi * (x - 40) / 180)
 
 def readMeas(fileNameList:list):
     """Returns dict of current in mA, power and 2*std in uW. Keys are 0, 1, 2, ...\n
