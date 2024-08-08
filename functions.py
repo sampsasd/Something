@@ -2,6 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tkinter.filedialog import askopenfilename, askopenfilenames
 import matplotlib.ticker as ticker
+from scipy import stats
+
+def sphericalGaussian(x, a, d, w):
+    return a * np.exp(w * (np.cos((np.pi*(x-d)/180)) - 1))
 
 def gaussian(x, a, x0, sig, h):
     return a * np.exp(-(x - x0)**2 / (2 * sig**2)) + h

@@ -8,7 +8,7 @@ import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from functions import gaussian, GnL, doubleGaussian, dGnL
+from functions import gaussian, GnL, doubleGaussian, dGnL, sphericalGaussian
 
 class apGUI:
     def __init__(self, master) -> None:
@@ -78,7 +78,7 @@ class apGUI:
         self.errorCheck.grid(column=0, row=1, padx=5, pady=5)
 
         self.fitGVar = IntVar(value=0)
-        self.fitGCheck = Checkbutton(self.frm, text='Fit  double Gauss + Lambert', variable=self.fitGVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
+        self.fitGCheck = Checkbutton(self.frm, text='Fit spherical Gaussian', variable=self.fitGVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
         self.fitGCheck.grid(column=0, row=2, padx=5, pady=5)
 
         self.fitGVar2 = IntVar(value=0)
@@ -86,7 +86,7 @@ class apGUI:
         self.fitGCheck2.grid(column=0, row=3, padx=5, pady=5)
 
         self.fitGVar3 = IntVar(value=0)
-        self.fitGCheck3 = Checkbutton(self.frm, text='Fit Double Gaussian', variable=self.fitGVar3, onvalue=1, offvalue=0, style='my.TCheckbutton')
+        self.fitGCheck3 = Checkbutton(self.frm, text='Fit Gaussian', variable=self.fitGVar3, onvalue=1, offvalue=0, style='my.TCheckbutton')
         self.fitGCheck3.grid(column=1, row=2, padx=5, pady=5)
 
         self.destructionBut = Button(self.frm, text='Close', style='my.TButton', command=self.master.quit)
@@ -112,24 +112,31 @@ class apGUI:
                 if not self.fitGVar.get() and not self.fitGVar2.get() and not self.fitGVar3.get():
                     for key in self.measDict:
                         plt.scatter(self.angleList, self.measDict[key], s=10, color='mediumorchid')
+                        plt.title(f'Laser: {key} mA')
                         plt.xlabel('Angle from specular / deg')
                         plt.ylabel('Power / $\\mathrm{\\mu}$W')
                         plt.show()
                 if self.fitGVar.get():
-                    self.fitDict = {}
+                    self.fitDict1 = {}
+                    self.measDict1 = {}
+                    self.angleList1 = self.angleList.copy()
+                    self.angleList1.remove(self.angleList1[0])
                     for key in self.measDict:
+                        self.measDict1[key] = self.measDict[key].copy()
+                        self.measDict1[key].remove(self.measDict1[key][0])
                         try:
-                            popt, pcov = curve_fit(dGnL, self.angleList, self.measDict[key], p0=[max(self.measDict[key]), 0, 3, (max(self.measDict[key])*0.5), 0, 20, (max(self.measDict[key])*0.01)])
+                            popt, pcov = curve_fit(sphericalGaussian, self.angleList, self.measDict[key], p0=[max(self.measDict[key])*0.4, 0, 15])
                             angs = np.linspace(-20, 120, 1000)
-                            fit = dGnL(angs, *popt)
-                            self.fitDict[key] = [angs, fit, popt, pcov]
+                            fit = sphericalGaussian(angs, *popt)
+                            self.fitDict1[key] = [angs, fit, popt, pcov]
                             print(popt, '\n', pcov)
                         except Exception as e:
                             print(e)
                             continue
                     for key in self.measDict:
                         plt.scatter(self.angleList, self.measDict[key], s=10)
-                        plt.plot(self.fitDict[key][0], self.fitDict[key][1])
+                        plt.plot(self.fitDict1[key][0], self.fitDict1[key][1])
+                    plt.title('Fit: Spherical Gaussian')
                     plt.xlabel('Angle from specular / deg')
                     plt.ylabel('Power / $\\mathrm{\\mu}$W')
                     plt.show()
@@ -153,6 +160,7 @@ class apGUI:
                     #for key in self.measDict:
                     plt.scatter(self.angleList, self.measDict[15], s=10, color='orchid')
                     plt.plot(self.fitDict2[15][0], self.fitDict2[15][1], color='darkorchid')
+                    plt.title('Fit: Gaussian + cosine (Lambert)')
                     plt.xlabel('Angle from specular / deg')
                     plt.ylabel('Power / $\\mathrm{\\mu}$W')
                     plt.show()
@@ -165,9 +173,9 @@ class apGUI:
                         self.measDict3[key] = self.measDict[key].copy()
                         self.measDict3[key].remove(self.measDict3[key][0])
                         try:
-                            popt, pcov = curve_fit(doubleGaussian, self.angleList3, self.measDict3[key], p0=[(max(self.measDict3[key])+(max(self.measDict3[key])*0.4)), 0, 10, (max(self.measDict3[key])*0.01), 40, 40, 0])
+                            popt, pcov = curve_fit(gaussian, self.angleList3, self.measDict3[key], p0=[(max(self.measDict3[key])*0.4, 0, 15, 0)])
                             angs = np.linspace(-20, 120, 1000)
-                            fit = doubleGaussian(angs, *popt)
+                            fit = gaussian(angs, *popt)
                             self.fitDict3[key] = [angs, fit, popt, pcov]
                             print(popt, '\n', pcov)
                         except Exception as e:
@@ -176,6 +184,7 @@ class apGUI:
                     #for key in self.measDict:
                     plt.scatter(self.angleList, self.measDict[15], s=10, color='mediumorchid')
                     plt.plot(self.fitDict3[15][0], self.fitDict3[15][1], color='darkorchid')
+                    plt.title(f'Sigma = {self.fitDict3[15][2][2]:.1f} deg')
                     plt.xlabel('Angle from specular / deg')
                     plt.ylabel('Power / $\\mathrm{\\mu}$W')
                     plt.show()
