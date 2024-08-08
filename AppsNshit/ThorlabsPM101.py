@@ -7,7 +7,7 @@ from ThorlabsPM100 import ThorlabsPM100
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TK
 from time import time, sleep
 
 class thorlabsGUI:
@@ -146,6 +146,10 @@ class thorlabsGUI:
             self.canvas.get_tk_widget().config(bg='midnightblue')
             self.canvas.draw()
             self.canvas.get_tk_widget().grid(column=1, row=0)
+
+            self.toolbar = NavigationToolbar2TK(self.canvas, master=self.master)
+            self.toolbar.update()
+            self.canvas.get_tk_widget().grid(column=1, row=1)
 
             #ANIMATION
             self.ani = animation.FuncAnimation(self.fig, self.update_plot, interval=10, blit=True, cache_frame_data=False)
