@@ -64,30 +64,34 @@ class apGUI:
         #=============================BUTTONS==================================================
 
         self.fileBut = Button(self.frm, text='Files', style='my.TButton', command=self.readMeas)
-        self.fileBut.grid(column=0, row=4, padx=5, pady=5)
+        self.fileBut.grid(column=0, row=5, padx=5, pady=5)
 
         self.clearDataBut = Button(self.frm, text='Clear data', style='my.TButton', command=self.clear)
         self.clearDataBut.configure(state='disabled')
-        self.clearDataBut.grid(column=0, row=5, padx=5, pady=5)
+        self.clearDataBut.grid(column=0, row=6, padx=5, pady=5)
 
         self.scatterBut = Button(self.frm, text='Scatter', style='my.TButton', command=self.scatter)
         self.scatterBut.grid(column=0, row=0, padx=20, pady=20)
 
+        self.singleVar = IntVar(value=0)
+        self.singleCheck = Checkbutton(self.frm, text='Single File', variable=self.singleVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
+        self.singleCheck.grid(column=0, row=1, padx=5, pady=5)
+
         self.errorVar = IntVar(value=0)
         self.errorCheck = Checkbutton(self.frm, text='Errorbar', variable=self.errorVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.errorCheck.grid(column=0, row=1, padx=5, pady=5)
+        self.errorCheck.grid(column=0, row=2, padx=5, pady=5)
 
         self.fitGVar = IntVar(value=0)
         self.fitGCheck = Checkbutton(self.frm, text='Fit spherical Gaussian', variable=self.fitGVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.fitGCheck.grid(column=0, row=2, padx=5, pady=5)
+        self.fitGCheck.grid(column=0, row=3, padx=5, pady=5)
 
         self.fitGVar2 = IntVar(value=0)
         self.fitGCheck2 = Checkbutton(self.frm, text='Fit Gauss + Lambert (Exc. Specular)', variable=self.fitGVar2, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.fitGCheck2.grid(column=0, row=3, padx=5, pady=5)
+        self.fitGCheck2.grid(column=0, row=4, padx=5, pady=5)
 
         self.fitGVar3 = IntVar(value=0)
         self.fitGCheck3 = Checkbutton(self.frm, text='Fit Gaussian', variable=self.fitGVar3, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.fitGCheck3.grid(column=1, row=2, padx=5, pady=5)
+        self.fitGCheck3.grid(column=1, row=3, padx=5, pady=5)
 
         self.destructionBut = Button(self.frm, text='Close', style='my.TButton', command=self.master.quit)
         self.destructionBut.grid(column=0, row=100, padx=30, pady=30)
@@ -203,28 +207,52 @@ class apGUI:
         """Reads current in mA, power and 2*std in uW.\n
         Deletes first row of file and assumes ', ' separator"""
         
-        fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
-        for i in range(len(fileNameList)):
-            currTemp = []
-            measTemp = []
-            stdTemp = []
-            with open(fileNameList[i], 'r') as file:
-                for row in file:
-                    points = row.strip().split(', ')
-                    currTemp.append(points[0])
-                    measTemp.append(points[1])
-                    stdTemp.append(points[2])
-                currTemp.remove(currTemp[0])
-                measTemp.remove(measTemp[0])
-                stdTemp.remove(stdTemp[0])
-                nameAngles = [('_0deg', 0), ('_10deg', 10), ('_20deg', 20), ('_30deg', 30), 
-                              ('_40deg', 40), ('_50deg', 50), ('_60deg', 60), ('_70deg', 70), 
-                              ('_100deg', 100), ('_110deg', 110), ('_120deg', 120), ('neg10deg', -10), 
-                              ('neg20deg', -20)]
-                for tup in nameAngles:
-                    if tup[0] in fileNameList[i]:
-                        self.filesDict[tup[1]] = ([float(point)*1e3 for point in currTemp], [(float(point)-float(measTemp[0]))*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
+        if not self.singleVar.get():
+            fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
+            for i in range(len(fileNameList)):
+                currTemp = []
+                measTemp = []
+                stdTemp = []
+                with open(fileNameList[i], 'r') as file:
+                    for row in file:
+                        points = row.strip().split(', ')
+                        currTemp.append(points[0])
+                        measTemp.append(points[1])
+                        stdTemp.append(points[2])
+                    currTemp.remove(currTemp[0])
+                    measTemp.remove(measTemp[0])
+                    stdTemp.remove(stdTemp[0])
+                    nameAngles = [('_0deg', 0), ('_10deg', 10), ('_20deg', 20), ('_30deg', 30), 
+                                ('_40deg', 40), ('_50deg', 50), ('_60deg', 60), ('_70deg', 70), 
+                                ('_100deg', 100), ('_110deg', 110), ('_120deg', 120), ('neg10deg', -10), 
+                                ('neg20deg', -20)]
+                    for tup in nameAngles:
+                        if tup[0] in fileNameList[i]:
+                            self.filesDict[tup[1]] = ([float(point)*1e3 for point in currTemp], [(float(point)-float(measTemp[0]))*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
                 
+        # elif self.singleVar.get():
+        #     #File needs to have data as angle, power, std, current
+        #     fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
+
+        #     angleTemp = []
+        #     measTemp = []
+        #     stdTemp = []
+        #     currTemp = []
+        #     with open(fileName, 'r') as file:
+        #         for row in file:
+        #             points = row.strip().split(', ')
+        #             angleTemp.append(int(points[0]))
+        #             measTemp.append(float(points[1]))
+        #             stdTemp.append(float(points[2]))
+        #             currTemp.append(points[3])
+
+        #             #Remove useless stuff
+        #             angleTemp.remove(angleTemp[0])
+        #             measTemp.remove(measTemp[0])
+        #             stdTemp.remove(stdTemp[0])
+        #             currTemp.remove(currTemp[0])
+                
+
         self.clearDataBut.configure(state='normal')
 
     def clear(self):
