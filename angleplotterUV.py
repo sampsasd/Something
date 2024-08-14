@@ -65,6 +65,7 @@ class ap2GUI:
         #=======================================FUNCTIONS======================================================
 
     def readData(self):
+        """Saves (angle, current, power, std) with int keys into self.filesDict"""
         #REMEMBER TO FIX SAVE DATA IN CURRENT SWEEP TO ANGLE, CURRENT, POWER, STD
         fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
         for i in range(len(fileNameList)):
@@ -75,7 +76,17 @@ class ap2GUI:
             with open(fileNameList[i], 'r') as file:
                 for row in file:
                     points = row.strip(). split(', ')
-                    #HERE HERE 
+                    angTemp.append(points[0])
+                    currTemp.append(points[1])
+                    measTemp.append(points[2])
+                    stdTemp.append(points[3])
+                angTemp.remove(angTemp[0])
+                currTemp.remove(currTemp[0])
+                measTemp.remove(measTemp[0])
+                stdTemp.remove(stdTemp[0])
+                
+                self.filesDict[i] = ([int(point) for point in angTemp], [float(point)*1e3 for point in currTemp], [(float(point)-float(measTemp[0]))*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
+                print(self.filesDict)
 
 
 
