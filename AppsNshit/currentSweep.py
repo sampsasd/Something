@@ -9,6 +9,7 @@ import tkinter as tk
 from ThorlabsPM100 import ThorlabsPM100
 import numpy as np
 from Keithley6487Pro import Keithley6487Pro
+import matplotlib.pyplot as plt
 
 class childK6487(Keithley6487Pro):
     def __init__(self, root):
@@ -27,8 +28,9 @@ class isweepGUI:
     def __init__(self, master) -> None:
         
         self.master = master
-        self.master.attributes('-fullscreen', True)
-        self.master.configure(background='lightgrey')
+        self.master.state('zoomed')
+        self.master.configure(background='#f0f0f0')
+        self.master.protocol('WM_DELETE_WINDOW', self.quit)
         self.instr = None
         self.isOn = None
         self.on = None
@@ -40,7 +42,7 @@ class isweepGUI:
 
         self.fStyle = Style()
         self.fStyle.theme_use('alt')
-        self.fStyle.configure(style='my.TFrame', background='lightgrey')
+        self.fStyle.configure(style='my.TFrame', background='#f0f0f0')
         self.frm = Frame(self.master, padding='1i', style='my.TFrame')
         self.frm.grid()
 
@@ -48,19 +50,19 @@ class isweepGUI:
 
         self.bStyle = Style()
         self.bStyle.theme_use('alt')
-        self.bStyle.configure(style='my.TButton', font=('Helvetica', 15), background='lightgrey', foreground='black')
+        self.bStyle.configure(style='my.TButton', font=('Helvetica', 15), background='#f0f0f0', foreground='black')
 
         self.bStyle = Style()
         self.bStyle.theme_use('alt')
-        self.bStyle.configure(style='my.TButton', font=('Helvetica', 12), background='lightgrey', foreground='black')
+        self.bStyle.configure(style='my.TButton', font=('Helvetica', 12), background='#f0f0f0', foreground='black')
 
         self.lStyle = Style()
         self.lStyle.theme_use('alt')
-        self.lStyle.configure(style='my.TLabel', font=('Helvetica', 12), background='lightgrey', foreground='black')
+        self.lStyle.configure(style='my.TLabel', font=('Helvetica', 12), background='#f0f0f0', foreground='black')
 
         self.stylecb = Style()
         self.stylecb.theme_use('alt')
-        self.stylecb.configure(style='my.TCheckbutton', font=('Helvetica', 12), background='lightgrey', foreground='black')
+        self.stylecb.configure(style='my.TCheckbutton', font=('Helvetica', 12), background='#f0f0f0', foreground='black')
 
         #==================================================================KEITHLEY220======================================================================================
 
@@ -179,6 +181,12 @@ class isweepGUI:
         self.wlEn.bind('<Return>', self.pmWavelength)
         self.wlLabel= Label(self.frm, text=f'{self.wl} nm', style='my.TLabel')
 
+        #PM angle
+        self.angleLab = Label(self.frm, text='Angle: ', style='my.TLabel')
+        self.angleEn = Entry(self.frm)
+        self.angleEn.bind('<Return>', self.angle)
+        self.angleLabel = Label(self.frm, text='-', style='my.TLabel')
+
         #SAVE DATA
         self.saveVar = tk.IntVar(value=0)
         self.saveCheck = Checkbutton(self.frm, text='Save', style='my.TCheckbutton', variable=self.saveVar, onvalue=1, offvalue=0)
@@ -199,6 +207,10 @@ class isweepGUI:
             self.wlEn.grid_remove()
             self.wlLabel.grid_remove()
             self.saveCheck.grid_remove()
+
+            self.angleLab.grid_remove()
+            self.angleEn.grid_remove()
+            self.angleLabel.grid_remove()
             try:
                 self.powermeter.system.beeper.immediate()
                 self.powermeter.close()
@@ -222,27 +234,32 @@ class isweepGUI:
                 self.wlLab.grid(column=6, row=1)
                 self.wlEn.grid(column=7, row=1, padx=10)
                 self.wlLabel.grid(column=8, row=1)
-                self.saveCheck.grid(column=6, row=3)
+
+                self.angleLab.grid(column=6, row=3)
+                self.angleEn.grid(column=7, row=3, padx=10)
+                self.angleLabel.grid(column=8, row=3)
+
+                self.saveCheck.grid(column=6, row=4)
 
             except Exception as e:
                 print(e)
 
     def toggleDm(self):
         if self.darkmode.get() == 0:
-            self.master.configure(background='lightgrey')
+            self.master.configure(background='#f0f0f0')
 
-            self.fStyle.configure(style='my.TFrame', background='lightgrey')
+            self.fStyle.configure(style='my.TFrame', background='#f0f0f0')
             
-            self.bStyle.configure(style='my.TButton', font=('Helvetica', 15), background='lightgrey', foreground='black')
-
-            
-            self.bStyle.configure(style='my.TButton', font=('Helvetica', 12), background='lightgrey', foreground='black')
+            self.bStyle.configure(style='my.TButton', font=('Helvetica', 15), background='#f0f0f0', foreground='black')
 
             
-            self.lStyle.configure(style='my.TLabel', font=('Helvetica', 12), background='lightgrey', foreground='black')
+            self.bStyle.configure(style='my.TButton', font=('Helvetica', 12), background='#f0f0f0', foreground='black')
+
+            
+            self.lStyle.configure(style='my.TLabel', font=('Helvetica', 12), background='#f0f0f0', foreground='black')
 
            
-            self.stylecb.configure(style='my.TCheckbutton', font=('Helvetica', 12), background='lightgrey', foreground='black')
+            self.stylecb.configure(style='my.TCheckbutton', font=('Helvetica', 12), background='#f0f0f0', foreground='black')
         else:
             self.master.configure(background='black')
 
@@ -259,6 +276,12 @@ class isweepGUI:
            
             self.stylecb.configure(style='my.TCheckbutton', font=('Helvetica', 12), background='black', foreground='red')
     
+    def angle(self, event=None):
+        self.ang = int(self.angleEn.get())
+        self.angleLabel.config(text=f'{self.ang} deg')
+        self.angleEn.delete(0, 'end')
+
+
     def pmAverage(self, event=None):
         self.pmAver = int(self.tlEn.get())
         self.tlLabel.config(text=f'{self.pmAver}')
@@ -306,6 +329,7 @@ class isweepGUI:
         currentStep = float(self.stepCurrent)
         stopCurrent = float(self.stopCurrent)
 
+        self.angleList = []
         self.currentList = []
         self.pmDataList = []
         self.pmStdList = []
@@ -319,14 +343,22 @@ class isweepGUI:
                     if self.running:
                         self.instr.write(f"I{current}X")
                         self.instr.write("F1X")
-                        print(current)
-                        sleep(1)
                         
+                        sleep(0.5)
+                        
+                        self.angleList.append(self.ang)
+
                         self.currentList.append(current)
 
+                        measTemp = []
+                        #for i in range(self.pmAver):
+                        #    measTemp.append(self.powermeter.read)
+                        #    sleep(0.01)
+                        #measTemp = np.array(measTemp)
                         measTemp = np.array([self.powermeter.read for i in range(self.pmAver)])
                         meas = measTemp.mean()
                         std = measTemp.std()
+                        print(current, meas)
                         self.pmDataList.append(meas)
                         self.pmStdList.append(std)
                         
@@ -336,7 +368,10 @@ class isweepGUI:
                     current = round(current + currentStep, 9)
                 self.running = False
                 self.instr.write("F0X")
-                print(f'{self.currentList}\n{self.pmDataList}\n{self.pmStdList}')
+                plt.scatter(self.currentList, self.pmDataList, s=10, c='mediumorchid')
+                plt.tight_layout()
+                plt.show()
+                #print(f'{self.angleList}\n{self.currentList}\n{self.pmDataList}\n{self.pmStdList}')
                 if self.saveVar.get():
                     self.save()
 
@@ -437,9 +472,13 @@ class isweepGUI:
         filename = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
         if filename:
             with open(filename, 'w') as file:
-                file.write('Current / A, Power / W, Standard deviation of power / W')
+                file.write('Angle / deg, Current / A, Power / W, Standard deviation of power / W')
                 for i in range(len(self.currentList)):
-                    file.write(f'\n{self.currentList[i]}, {self.pmDataList[i]}, {self.pmStdList[i]}')
+                    file.write(f'\n{self.angleList[i]}, {self.currentList[i]}, {self.pmDataList[i]}, {self.pmStdList[i]}')
+        self.angleList.clear()
+        self.currentList.clear()
+        self.pmDataList.clear()
+        self.pmStdList.clear()
 
 def main():
     root = Tk()

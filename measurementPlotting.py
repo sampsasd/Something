@@ -139,9 +139,9 @@ class plotGUI:
             with open(fileName, 'r') as file:
                 for row in file:
                     points = row.strip().split(', ')
-                    self.currentList.append(points[0])
-                    self.measList.append(points[1])
-                    self.stdList.append(points[2])
+                    self.currentList.append(points[1])
+                    self.measList.append(points[2])
+                    self.stdList.append(points[3])
                 self.currentList.remove(self.currentList[0])
                 self.measList.remove(self.measList[0])
                 self.stdList.remove(self.stdList[0])

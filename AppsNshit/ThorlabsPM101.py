@@ -7,7 +7,7 @@ from ThorlabsPM100 import ThorlabsPM100
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TK
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from time import time, sleep
 
 class thorlabsGUI:
@@ -16,6 +16,8 @@ class thorlabsGUI:
         #self.master.attributes('-fullscreen', True)
         self.master.title('Thorlabs PM101')
         self.master.configure(background='black')
+        self.master.state('zoomed')
+        self.master.protocol('WM_DELETE_WINDOW', self.DESTRUCTION)
         self.pmAver = 1
         self.wl = 450
         self.running = False
@@ -147,9 +149,9 @@ class thorlabsGUI:
             self.canvas.draw()
             self.canvas.get_tk_widget().grid(column=1, row=0)
 
-            self.toolbar = NavigationToolbar2TK(self.canvas, master=self.master)
-            self.toolbar.update()
-            self.canvas.get_tk_widget().grid(column=1, row=1)
+            #self.toolbar = NavigationToolbar2Tk(self.canvas, window=self.master)
+            #self.toolbar.update()
+            #self.canvas.get_tk_widget().grid(column=1, row=1)
 
             #ANIMATION
             self.ani = animation.FuncAnimation(self.fig, self.update_plot, interval=10, blit=True, cache_frame_data=False)
