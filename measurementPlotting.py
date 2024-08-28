@@ -3,13 +3,15 @@ import numpy as np
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import *
 from tkinter import Tk, IntVar
+from scipy.optimize import curve_fit
+from functions import line
 
 class plotGUI:
     def __init__(self, master) -> None:
         self.master = master
-        self.master.attributes('-fullscreen', True)
         self.master.title("Harry Plotter")
         self.master.configure(background='black')
+        self.master.state('zoomed')
         self.currentList = []
         self.measList = []
         self.stdList = []
@@ -76,13 +78,25 @@ class plotGUI:
         self.colorLabel = Label(self.frm, text=self.mColor, style='my.TLabel')
         self.colorLabel.grid(column=3, row=0, padx=10, pady=10)
 
+        self.filterLab = Label(self.frm, text='Filter Coeff: ', style='my.TLabel')
+        self.filterLab.grid(column=1, row=1, padx=10, pady=10)
+        self.filterEn = Entry(self.frm)
+        self.filterEn.bind('<Return>', self.setFilter)
+        self.filterEn.grid(column=2, row=1)
+        self.filterLabel = Label(self.frm, text='-', style='my.TLabel')
+        self.filterLabel.grid(column=3, row=1, padx=10, pady=10)
+
+        self.filterVar = IntVar(value=0)
+        self.filterCheck = Checkbutton(self.frm, text='Filter', variable=self.filterVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
+        self.filterCheck.grid(column=4, row=1, padx=10, pady=10)
+
         self.twinxVar = IntVar(value=0)
         self.twinxCheck = Checkbutton(self.frm, text='Twinx', style='my.TCheckbutton', variable=self.twinxVar, onvalue=1, offvalue=0)
-        self.twinxCheck.grid(column=1, row=1, padx=10, pady=10)
+        self.twinxCheck.grid(column=1, row=2, padx=10, pady=10)
 
         self.errorVar = IntVar(value=0)
         self.errorCheck = Checkbutton(self.frm, text='Errorbar', variable=self.errorVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.errorCheck.grid(column=2, row=1, padx=10, pady=10)
+        self.errorCheck.grid(column=2, row=2, padx=10, pady=10)
 
         self.scatterBut = Button(self.frm, text='Scatter', style='my.TButton', command=self.scatter)
         self.scatterBut.grid(column=5, row=0, padx=10, pady=10)
@@ -93,15 +107,29 @@ class plotGUI:
         """Scatters  Power / uW as a function of current / mA"""
 
         if not self.multiVar.get():
-            try:
-                plt.scatter(self.currentList, self.measList, marker='o', s=10, c=self.mColor)
-                if self.errorVar.get():
-                    plt.errorbar(self.currentList, self.measList, yerr=self.stdList, fmt='none', capsize=4, c=self.mColor)
-                plt.xlabel('Current / mA')
-                plt.ylabel('Power / $\\mathrm{\\mu}$W')
-                plt.show()
-            except Exception as e:
-                print(e)
+            if self.filterVar.get():
+                try:
+                    self.filterData()
+                    plt.scatter(self.currentListFiltered, self.measListFiltered, marker='o', s=10, c=self.mColor)
+                    if self.errorVar.get():
+                        plt.errorbar(self.currentListFiltered, self.measListFiltered, yerr=self.stdListFiltered, fmt='none', capsize=4, c=self.mColor)
+                    plt.plot(self.currentListFiltered, self.fit, label=f'{self.popt[0]:.3e} * $I$ + {self.popt[1]:.3e}')
+                    plt.xlabel('Current / mA')
+                    plt.ylabel('Power / $\\mathrm{\\mu}$W')
+                    plt.legend()
+                    plt.show()
+                except Exception as e:
+                    print(e)
+            else:
+                try:
+                    plt.scatter(self.currentList, self.measList, marker='o', s=10, c=self.mColor)
+                    if self.errorVar.get():
+                        plt.errorbar(self.currentList, self.measList, yerr=self.stdList, fmt='none', capsize=4, c=self.mColor)
+                    plt.xlabel('Current / mA')
+                    plt.ylabel('Power / $\\mathrm{\\mu}$W')
+                    plt.show()
+                except Exception as e:
+                    print(e)
         if self.multiVar.get():
             try:
                 if not self.errorVar.get():
@@ -171,6 +199,50 @@ class plotGUI:
                     else:
                         self.filesDict[i] = (currTemp, [float(point)*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
             self.clearDataBut.configure(state='normal')
+
+    def setFilter(self, event=None):
+        self.filterCoeff = float(self.filterEn.get())
+        self.filterLabel.config(text=f'{self.filterCoeff}')
+        self.filterEn.delete(0, 'end')
+
+    def filterData(self, event=None):
+
+        self.currentListFiltered = self.currentList.copy()
+        self.measListFiltered = self.measList.copy()
+        self.stdListFiltered = self.stdList.copy()
+
+        while True:
+            newIter = False
+
+            self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
+            print(self.popt, self.pcov)
+            self.fit = [line(self.currentListFiltered[i], *self.popt) for i in range(len(self.currentListFiltered))]
+            
+            i = 0
+            while i < len(self.fit):
+                if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i]:
+                    self.currentListFiltered.remove(self.currentListFiltered[i])
+                    self.measListFiltered.remove(self.measListFiltered[i])
+                    self.stdListFiltered.remove(self.stdListFiltered[i])
+                    self.fit.remove(self.fit[i])
+                    newIter = True
+                else:
+                    i += 1
+
+            if not newIter:
+                break
+
+        # for i in range(len(self.currentList)):
+        #     if i == 0:
+        #         self.currentListFiltered.append(self.currentList[i])
+        #         self.measListFiltered.append(self.measList[i])
+        #         self.stdListFiltered.append(self.stdList[i])
+        #     elif self.measList[i] > self.measList[i-1] + self.filterCoeff * self.measList[i-1]:
+        #         continue
+        #     else:
+        #         self.currentListFiltered.append(self.currentList[i])
+        #         self.measListFiltered.append(self.measList[i])
+        #         self.stdListFiltered.append(self.stdList[i])
 
     def DESTRUCTION(self):
         self.master.quit()

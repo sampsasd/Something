@@ -4,6 +4,10 @@ from tkinter.filedialog import askopenfilename, askopenfilenames
 import matplotlib.ticker as ticker
 from scipy import stats
 
+
+def line(x, a, b):
+    return a * x + b
+
 def sphericalGaussian(x, a, d, w):
     return a * np.exp(w * (np.cos((np.pi*(x-d)/180)) - 1))
 

@@ -30,6 +30,8 @@ class thorlabsGUI:
         self.timeIdle = 0
         self.firstRun = 0
         self.currentList = []
+        self.angleList = []
+        self.angle = '-'
         self.measList = []
         self.stdList = []
         self.laser = '-'
@@ -107,8 +109,17 @@ class thorlabsGUI:
             self.laserEn.bind('<Return>', self.laserI)
             self.laserLabel = Label(self.frm, text=f'{self.laser} mA', style='my.TLabel')
 
+            #Angle
+            self.angleLab = Label(self.frm, text='Angle: ', style='my.TLabel')# HERE NEW ======================
+            self.angleEn = Entry(self.frm, background='dimgrey', style='my.TEntry')
+            self.angleEn.bind('<Return>', self.setAngle)
+            self.angleLabel = Label(self.frm, text=f'{self.angle} deg', style='my.TLabel')
+
             #MEASURE
             self.measBut = Button(self.frm, text='Measure', style='my.TButton', command=self.measure)
+
+            #MEASUREMENT LABEL
+            self.measLabel = Label(self.frm, text='Measurement: -', style='my.TLabel')
 
             #DISCARD
             self.discBut = Button(self.frm, text='Discard', style='my.TButton', command=self.discard)
@@ -183,7 +194,13 @@ class thorlabsGUI:
             self.measBut.grid_remove()
             self.saveBut.grid_remove()
 
+            self.angleLab.grid_remove()
+            self.angleEn.grid_remove()
+            self.angleLabel.grid_remove()
+
             self.discBut.grid_remove()
+
+            self.measLabel.grid_remove()
         else:
             self.laserLab.grid(column=0, row=8, pady=10)
             self.laserEn.grid(column=1, row=8, pady=10)
@@ -192,10 +209,22 @@ class thorlabsGUI:
             self.averLab.grid(column=0, row=9, pady=10)
             self.averEn.grid(column=1, row=9, pady=10)
             self.averLabel.grid(column=2, row=9, pady=10)
-            self.measBut.grid(column=1, row=10)
-            self.saveBut.grid(column=1, row=12)
 
-            self.discBut.grid(column=1, row=11)
+            self.angleLab.grid(column=0, row=10, pady=10)#HERE NEW ===============
+            self.angleEn.grid(column=1, row=10, pady=10)
+            self.angleLabel.grid(column=2, row=10, pady=10)
+
+            self.measBut.grid(column=1, row=11)
+            self.saveBut.grid(column=1, row=13)
+
+            self.discBut.grid(column=1, row=12)
+
+            self.measLabel.grid(column=1, row=14, pady=10)
+    
+    def setAngle(self, event=None):# HERE NEW ==============================
+        self.angle = int(self.angleEn.get())
+        self.angleEn.delete(0, 'end')
+        self.angleLabel.config(text=f'{self.angle} deg')
     
     def setSeconds(self, event=None):
         self.xAxisLen = float(self.secondsEn.get())
@@ -305,11 +334,13 @@ class thorlabsGUI:
             self.currentList = [0, 5e-3, 15e-3, 30e-3]
         else:
             self.currentList.append(self.laser)
+        self.angleList.append(self.angle)
         self.measList.append(meas)
         self.stdList.append(std)
         self.measBut.config(state='normal')
         if len(self.measList) != 0:
             self.discBut.configure(state='normal')
+        self.measLabel.config(text=f'Angle: {self.angle} deg\nCurrent: {self.laser} A\nPower: {meas:.3e} W\nStd: {std:.3e} W')
 
     def clear(self):
         self.xdata = []
@@ -332,11 +363,13 @@ class thorlabsGUI:
         return self.sc, 
 
     def discard(self):
+        self.angleList = []
         self.currentList = []
         self.measList = []
         self.stdList = []
         self.discBut.configure(state='disabled')
-
+        self.measLabel.config(text='Measurement: -')
+ 
     def save(self):
         filename = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
         if filename:
