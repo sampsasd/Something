@@ -92,7 +92,7 @@ class ap4GUI:
         # self.fitGCheck2 = Checkbutton(self.frm, text='Fit Gauss + Lambert (Exc. Specular)', variable=self.fitGVar2, onvalue=1, offvalue=0, style='my.TCheckbutton')
         # self.fitGCheck2.grid(column=0, row=4, padx=5, pady=5)
 
-        self.fileBut = Button(self.frm, text='Files', style='my.TButton', command=self.readData)
+        self.fileBut = Button(self.frm, text='File(s)', style='my.TButton', command=self.readData)
         self.fileBut.grid(column=0, row=3, padx=5, pady=5)
 
         self.clearDataBut = Button(self.frm, text='Clear data', style='my.TButton', command=self.clear)
@@ -100,23 +100,39 @@ class ap4GUI:
         self.clearDataBut.grid(column=0, row=4, padx=5, pady=5)
     
     def scatter(self):
-        pass
+        
+        if not self.multiVar.get():
+            plt.scatter(self.refAngleList, self.measList, s=10, color='mediumorchid')
+            if self.errorVar.get():
+                plt.errorbar(self.refAngleList, self.measList, yerr=self.stdList, fmt='none', c='mediumorchid', capsize=4)
+            plt.tight_layout()
+            plt.show()
 
     def readData(self):
-        """Reads data from csv (angle, current, power, std) and saves to class datalist attributes"""
+        """Reads data from csv (angle, current, power, std) and saves to class datalist attributes (std is saved as 2 sigma)"""
 
         if not self.multiVar.get():
             filename = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
             with open(filename, 'r') as file:
-                for row in file:
+                rows = list(file)
+                rows.pop(0)
+                for row in rows:
                     points = row.strip().split(', ')
-                    self.refAngleList.append(points[0])
-                    self.currentList.append(points[1])
-                    self.measList.append(points[2])
-                    self.stdList.append(points[3])
+                    self.refAngleList.append(int(points[0]))
+                    self.currentList.append(float(points[1]))
+                    self.measList.append(float(points[2]))
+                    self.stdList.append(2 * float(points[3]))
+            self.fileBut.configure(state='disabled')
+        
+        self.clearDataBut.configure(state='normal')
 
     def clear(self):
-        pass
+        self.refAngleList.clear()
+        self.currentList.clear()
+        self.measList.clear()
+        self.stdList.clear()
+        self.clearDataBut.configure(state='disabled')
+        self.fileBut.configure(state='normal')
 
 
 def main():
