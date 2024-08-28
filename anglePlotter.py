@@ -229,7 +229,9 @@ class apGUI:
                     for tup in nameAngles:
                         if tup[0] in fileNameList[i]:
                             self.filesDict[tup[1]] = ([float(point)*1e3 for point in currTemp], [(float(point)-float(measTemp[0]))*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
-                
+        elif self.singleVar.get():
+            pass
+
         # elif self.singleVar.get():
         #     #File needs to have data as angle, power, std, current
         #     fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
