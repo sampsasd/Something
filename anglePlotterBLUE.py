@@ -72,9 +72,9 @@ class ap4GUI:
         self.scatterBut = Button(self.frm, text='Scatter', style='my.TButton', command=self.scatter)
         self.scatterBut.grid(column=0, row=0, padx=20, pady=20)
 
-        self.singleVar = IntVar(value=0)
-        self.singleCheck = Checkbutton(self.frm, text='Plot multiple', variable=self.singleVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
-        self.singleCheck.grid(column=0, row=1, padx=5, pady=5)
+        self.multiVar = IntVar(value=0)
+        self.multiCheck = Checkbutton(self.frm, text='Plot multiple', variable=self.multiVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
+        self.multiCheck.grid(column=0, row=1, padx=5, pady=5)
 
         self.errorVar = IntVar(value=0)
         self.errorCheck = Checkbutton(self.frm, text='Errorbar', variable=self.errorVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
@@ -103,7 +103,17 @@ class ap4GUI:
         pass
 
     def readData(self):
-        pass
+        """Reads data from csv (angle, current, power, std) and saves to class datalist attributes"""
+
+        if not self.multiVar.get():
+            filename = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
+            with open(filename, 'r') as file:
+                for row in file:
+                    points = row.strip().split(', ')
+                    self.refAngleList.append(points[0])
+                    self.currentList.append(points[1])
+                    self.measList.append(points[2])
+                    self.stdList.append(points[3])
 
     def clear(self):
         pass
