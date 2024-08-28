@@ -374,9 +374,10 @@ class thorlabsGUI:
         filename = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
         if filename:
             with open(filename, 'w') as file:
-                file.write('Laser current / A, Power / W, Standard deviation of power / W')
+                file.write('Angle / deg, Laser current / A, Power / W, Standard deviation of power / W')
                 for i in range(len(self.measList)):
-                    file.write(f'\n{self.currentList[i]}, {self.measList[i]}, {self.stdList[i]}')
+                    file.write(f'\n{self.angleList[i]}, {self.currentList[i]}, {self.measList[i]}, {self.stdList[i]}')
+            self.angleList = []
             self.currentList = []
             self.measList = []
             self.stdList = []
