@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from tkinter.filedialog import askopenfilename, askopenfilenames
+from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
 from tkinter.ttk import *
 from tkinter import Tk, IntVar
 from scipy.optimize import curve_fit
 from functions import line
+from FileHandler import WriteJson, ReadJson
 
 class plotGUI:
     def __init__(self, master) -> None:
@@ -12,10 +13,13 @@ class plotGUI:
         self.master.title("Harry Plotter")
         self.master.configure(background='black')
         self.master.state('zoomed')
+        self.angle = None
         self.currentList = []
         self.measList = []
         self.stdList = []
         self.filesDict = {}
+        self.paramDict = {}
+        self.filterCoeff = 0.05
         self.mColor = 'mediumorchid'
 
         self.frmStyle = Style()
@@ -67,8 +71,8 @@ class plotGUI:
         self.clearDataBut.configure(state='disabled')
         self.clearDataBut.grid(column=0, row=2)
 
-        self.destructionBut = Button(self.frm, text='Close', style='my.TButton', command=self.DESTRUCTION)
-        self.destructionBut.grid(column=0, row=100, padx=20, pady=20)
+        #self.destructionBut = Button(self.frm, text='Close', style='my.TButton', command=self.DESTRUCTION)
+        #self.destructionBut.grid(column=0, row=100, padx=20, pady=20)
 
         self.colorLab = Label(self.frm, text='Color:', style='my.TLabel')
         self.colorLab.grid(column=1, row=0, padx=10, pady=10)
@@ -83,7 +87,7 @@ class plotGUI:
         self.filterEn = Entry(self.frm)
         self.filterEn.bind('<Return>', self.setFilter)
         self.filterEn.grid(column=2, row=1)
-        self.filterLabel = Label(self.frm, text='-', style='my.TLabel')
+        self.filterLabel = Label(self.frm, text=f'{self.filterCoeff}', style='my.TLabel')
         self.filterLabel.grid(column=3, row=1, padx=10, pady=10)
 
         self.filterVar = IntVar(value=0)
@@ -101,7 +105,27 @@ class plotGUI:
         self.scatterBut = Button(self.frm, text='Scatter', style='my.TButton', command=self.scatter)
         self.scatterBut.grid(column=5, row=0, padx=10, pady=10)
 
+        self.appendBut = Button(self.frm, text='Append params', style='my.TButton', command=self.appendParams)
+        self.appendBut.grid(column=5, row=1, padx=10, pady=10)
+
+        self.saveParamsBut = Button(self.frm, text='Save Params', style='my.TButton', command=self.saveParams)
+        self.saveParamsBut.grid(column=5, row=2, padx=10, pady=10)
+
+        self.clearParamsBut = Button(self.frm, text='Clear Params', style='my.TButton', command=self.clearParams)
+        self.clearParamsBut.grid(column=5, row=3, padx=10, pady=20)
+
     #==================================FUNC=================================================================
+
+    def clearParams(self):
+        self.paramDict.clear()
+
+    def saveParams(self):
+        fName = asksaveasfilename(initialdir='./AppsNshit/Data')
+        WriteJson(fName, self.paramDict)
+
+    def appendParams(self):
+        self.paramDict[self.angle] = ([self.popt[0], self.popt[1]], [[self.pcov[0][0], self.pcov[0][1]], [self.pcov[1][0], self.pcov[1][1]]])
+        print(self.paramDict)
 
     def scatter(self):
         """Scatters  Power / uW as a function of current / mA"""
@@ -114,8 +138,8 @@ class plotGUI:
                     if self.errorVar.get():
                         plt.errorbar(self.currentListFiltered, self.measListFiltered, yerr=self.stdListFiltered, fmt='none', capsize=4, c=self.mColor)
                     plt.plot(self.currentListFiltered, self.fit, label=f'{self.popt[0]:.3e} * $I$ + {self.popt[1]:.3e}')
-                    plt.xlabel('Current / mA')
-                    plt.ylabel('Power / $\\mathrm{\\mu}$W')
+                    plt.xlabel('Current / A')
+                    plt.ylabel('Power / W')
                     plt.legend()
                     plt.show()
                 except Exception as e:
@@ -125,8 +149,8 @@ class plotGUI:
                     plt.scatter(self.currentList, self.measList, marker='o', s=10, c=self.mColor)
                     if self.errorVar.get():
                         plt.errorbar(self.currentList, self.measList, yerr=self.stdList, fmt='none', capsize=4, c=self.mColor)
-                    plt.xlabel('Current / mA')
-                    plt.ylabel('Power / $\\mathrm{\\mu}$W')
+                    plt.xlabel('Current / A')
+                    plt.ylabel('Power / W')
                     plt.show()
                 except Exception as e:
                     print(e)
@@ -139,8 +163,8 @@ class plotGUI:
                     for key in self.filesDict:
                         plt.scatter(self.filesDict[key][0], self.filesDict[key][1], marker='o', s=10, c=self.mColor)
                         plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
-                plt.xlabel('Current / mA')
-                plt.ylabel('Power / $\\mathrm{\\mu}$W')
+                plt.xlabel('Current / A')
+                plt.ylabel('Power / W')
                 plt.show()
             except Exception as e:
                 print(e)
@@ -165,18 +189,18 @@ class plotGUI:
         if not self.multiVar.get():
             fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
             with open(fileName, 'r') as file:
-                for row in file:
+                rows = list(file)
+                rows.pop(0)
+                for row in rows:
                     points = row.strip().split(', ')
                     self.currentList.append(points[1])
                     self.measList.append(points[2])
                     self.stdList.append(points[3])
-                self.currentList.remove(self.currentList[0])
-                self.measList.remove(self.measList[0])
-                self.stdList.remove(self.stdList[0])
                 if self.currentList[0] != '-':
-                    self.currentList = [float(point)*1e3 for point in self.currentList]
-                self.measList = [float(point)*1e6 for point in self.measList]
-                self.stdList = [2*float(point)*1e6 for point in self.stdList]
+                    self.currentList = [float(point) for point in self.currentList]
+                self.measList = [float(point) for point in self.measList]
+                self.stdList = [2*float(point) for point in self.stdList]
+                self.angle = int(points[0])
             
             self.clearDataBut.configure(state='normal')
         if self.multiVar.get():
@@ -195,9 +219,9 @@ class plotGUI:
                     measTemp.remove(measTemp[0])
                     stdTemp.remove(stdTemp[0])
                     if currTemp[0] != '-':
-                        self.filesDict[i] = ([float(point)*1e3 for point in currTemp], [float(point)*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
+                        self.filesDict[i] = ([float(point) for point in currTemp], [float(point) for point in measTemp], [2*float(point) for point in stdTemp])
                     else:
-                        self.filesDict[i] = (currTemp, [float(point)*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
+                        self.filesDict[i] = (currTemp, [float(point) for point in measTemp], [2*float(point) for point in stdTemp])
             self.clearDataBut.configure(state='normal')
 
     def setFilter(self, event=None):

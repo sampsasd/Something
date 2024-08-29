@@ -115,16 +115,14 @@ class ap2GUI:
             measTemp = []
             stdTemp = []
             with open(fileNameList[i], 'r') as file:
+                rows = list(file)
+                rows.pop(0)
                 for row in file:
                     points = row.strip(). split(', ')
-                    angTemp.append(points[0])
-                    currTemp.append(points[1])
-                    measTemp.append(points[2])
-                    stdTemp.append(points[3])
-                angTemp.remove(angTemp[0])
-                currTemp.remove(currTemp[0])
-                measTemp.remove(measTemp[0])
-                stdTemp.remove(stdTemp[0])
+                    angTemp.append(int(points[0]))
+                    currTemp.append(float(points[1]))
+                    measTemp.append(float(points[2]))
+                    stdTemp.append(float(points[3]))
                 
                 self.filesDict[i] = ([int(point) for point in angTemp], [float(point)*1e3 for point in currTemp], [(float(point)-float(measTemp[0]))*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
         
