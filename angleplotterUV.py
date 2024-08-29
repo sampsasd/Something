@@ -7,6 +7,7 @@ import threading
 import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
+from FileHandler import ReadJson
 
 class ap2GUI:
     def __init__(self, master) -> None:
@@ -15,8 +16,11 @@ class ap2GUI:
         self.master.configure(background='black')
         self.master.state('zoomed')
 
-        self.filesDict = {}
+        self.angleList = []
+        self.powerList = []
+        self.sigmaList = []
         self.dataDict = {}
+        self.current = 50e-3
 
         #==============================STYLES================================================
         self.frmStyle = Style()
@@ -65,98 +69,65 @@ class ap2GUI:
         #===============================BUTTONS N STUFF=====================================================
 
         self.plotBut = Button(self.frm, text='Plot', command=self.plotData, style='my.TButton')
-        self.plotBut.grid(column=0, row=0, padx=5, pady=5)
+        self.plotBut.grid(column=1, row=0, padx=5, pady=5)
         self.plotBut.config(state='disabled')
 
-        self.filesBut = Button(self.frm, text='Select Files', command=self.readData, style='my.TButton')
-        self.filesBut.grid(column=0, row=1, padx=5, pady=5)
+        self.currLab = Label(self.frm, text='Current: ', style='my.TLabel')
+        self.currLab.grid(column=0, row=1, padx=5, pady=5)
+        self.currEn = Entry(self.frm, style='my.TEntry')
+        self.currEn.bind('<Return>', self.setCurrent)
+        self.currEn.grid(column=1, row=1, padx=5, pady=5)
+        self.currLabel = Label(self.frm, text=f'{self.current} A', style='my.TLabel')
+        self.currLabel.grid(column=2, row=1, padx=5, pady=5)
 
-
-
-
-
-        
-        self.shitFrame = Frame(self.frm, style='my.TFrame')
-        self.shitFrame.grid(column=0, row=2, padx=5, pady=5)
-        
-
-        self.dataCanvas = tk.Canvas(self.shitFrame, borderwidth=0, width=200, height=200, background='black')
-        self.dataCanvas.pack(side='left', fill='both', expand=True)
-        
-        self.scroller = Scrollbar(self.shitFrame, orient='vertical', command=self.dataCanvas.yview, style='my.Vertical.TScrollbar')
-        self.scroller.pack(side='right', fill='y')
-        
-        self.dataFrame = Frame(self.dataCanvas, style='my.TFrame')
-        #self.dataFrame.bind('<Configure>', self.on_frame_configure)
-        self.dataCanvas.create_window((2, 2), window=self.dataFrame, anchor='nw')
-
-        
-        
-        
-
-
+        self.filesBut = Button(self.frm, text='Select File', command=self.readData, style='my.TButton')
+        self.filesBut.grid(column=1, row=2, padx=5, pady=5)
 
         self.clearBut = Button(self.frm, text='Clear Data', command=self.clearData, style='my.TButton')
-        self.clearBut.grid(column=0, row=4, padx=20, pady=20)
+        self.clearBut.grid(column=1, row=3, padx=20, pady=20)
         self.clearBut.config(state='disabled')
         
         #=======================================FUNCTIONS======================================================
 
-    def on_frame_configure(self):
-        self.dataCanvas.configure(scrollregion=self.dataCanvas.bbox())
+    def interpolateData(self):
+        """Takes fit parameters and interpolates power and 2 sigma error for given current"""
+        for angle in self.dataDict:
+            self.angleList.append(int(angle))
+            self.powerList.append(self.dataDict[angle][0][0] * self.current)
+            self.sigmaList.append(2 * np.sqrt(self.dataDict[angle][1][0][0]) * self.current + 2 * np.sqrt(self.dataDict[angle][1][1][1]))
+        print(self.angleList, self.powerList, self.sigmaList)
+
+    def setCurrent(self, event=None):
+        self.current = float(self.currEn.get())
+        self.currLabel.config(text=f'{self.current} A')
+        self.currEn.delete(0, 'end')
+
+        self.angleList.clear()
+        self.powerList.clear()
+        self.sigmaList.clear()
+        self.interpolateData()
 
     def readData(self):
-        """Saves (angle, current, power, std) with int keys into self.filesDict"""
+        """Returns self.filesDict"""
         #REMEMBER TO FIX SAVE DATA IN CURRENT SWEEP TO ANGLE, CURRENT, POWER, STD
-        fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
-        for i in range(len(fileNameList)):
-            angTemp = []
-            currTemp = []
-            measTemp = []
-            stdTemp = []
-            with open(fileNameList[i], 'r') as file:
-                rows = list(file)
-                rows.pop(0)
-                for row in file:
-                    points = row.strip(). split(', ')
-                    angTemp.append(int(points[0]))
-                    currTemp.append(float(points[1]))
-                    measTemp.append(float(points[2]))
-                    stdTemp.append(float(points[3]))
-                
-                self.filesDict[i] = ([int(point) for point in angTemp], [float(point)*1e3 for point in currTemp], [(float(point)-float(measTemp[0]))*1e6 for point in measTemp], [2*float(point)*1e6 for point in stdTemp])
-        
-        #No comment
-        self.dataDict = {}
-        for key in self.filesDict:
-            for current in self.filesDict[key][1]:
-                if current in self.dataDict:
-                    self.dataDict[current][0].append(self.filesDict[key][0])
-                    self.dataDict[current][1].append(self.filesDict[key][2])
-                    self.dataDict[current][2].append(self.filesDict[key][3])
-                else:
-                    self.dataDict[current] = [[self.filesDict[key][0]], [self.filesDict[key][2]], self.filesDict[key][3]]
-        
-        self.checkDict = {}
-        for key in self.dataDict:
-            tempVar = IntVar(value=1)
-            tempCheck = Checkbutton(self.dataFrame, text=f'{key} mA', variable=tempVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
-            tempCheck.pack(side='top', fill='x')
-            self.checkDict[key] = [tempVar, tempCheck]
+        fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('json files', 'json'), ))
+        self.dataDict = ReadJson(fileName)
         
         self.plotBut.config(state='normal')
         self.clearBut.config(state='normal')
+        self.filesBut.config(state='disabled')
+
+        self.interpolateData()
     
     def plotData(self):
         pass
 
     def clearData(self):
         self.dataDict.clear()
-        for key in self.checkDict:
-            self.checkDict[key][1].destroy()
-        self.checkDict.clear()
+    
         self.clearBut.config(state='disabled')
         self.plotBut.config(state='disabled')
+        self.filesBut.config(state='normal')
 
 
 

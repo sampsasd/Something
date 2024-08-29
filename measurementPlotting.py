@@ -6,6 +6,8 @@ from tkinter import Tk, IntVar
 from scipy.optimize import curve_fit
 from functions import line
 from FileHandler import WriteJson, ReadJson
+from statsmodels.api import WLS
+import statsmodels.api as sm
 
 class plotGUI:
     def __init__(self, master) -> None:
@@ -237,11 +239,15 @@ class plotGUI:
 
         while True:
             newIter = False
-
-            self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
+            weights = [1/(point**2) for point in self.stdListFiltered]
+            xDataForWLS = sm.add_constant(self.currentListFiltered)
+            wlsFit = WLS(self.measListFiltered, xDataForWLS, weights=weights).fit()
+            self.popt = wlsFit.params
+            self.pcov = wlsFit.cov_params()
+            #self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
             print(self.popt, self.pcov)
-            self.fit = [line(self.currentListFiltered[i], *self.popt) for i in range(len(self.currentListFiltered))]
-            
+            self.fit = [line(self.currentListFiltered[i], self.popt[1], self.popt[0]) for i in range(len(self.currentListFiltered))]
+            #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
             i = 0
             while i < len(self.fit):
                 if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i]:
