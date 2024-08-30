@@ -72,6 +72,10 @@ class ap2GUI:
         self.plotBut.grid(column=1, row=0, padx=5, pady=5)
         self.plotBut.config(state='disabled')
 
+        self.errorVar = IntVar(value=0)
+        self.errorCheck = Checkbutton(self.frm, text='Errorbars', style='my.TCheckbutton', variable=self.errorVar, onvalue=1, offvalue=0)
+        self.errorCheck.grid(column=2, row=0, padx=5, pady=5)
+
         self.currLab = Label(self.frm, text='Current: ', style='my.TLabel')
         self.currLab.grid(column=0, row=1, padx=5, pady=5)
         self.currEn = Entry(self.frm, style='my.TEntry')
@@ -93,8 +97,8 @@ class ap2GUI:
         """Takes fit parameters and interpolates power and 2 sigma error for given current"""
         for angle in self.dataDict:
             self.angleList.append(int(angle))
-            self.powerList.append(self.dataDict[angle][0][0] * self.current)
-            self.sigmaList.append(2 * np.sqrt(self.dataDict[angle][1][0][0]) * self.current + 2 * np.sqrt(self.dataDict[angle][1][1][1]))
+            self.powerList.append(self.dataDict[angle][0][1] * self.current)
+            self.sigmaList.append(2 * np.sqrt(self.dataDict[angle][1][1][1]) * self.current + 2 * np.sqrt(self.dataDict[angle][1][0][0]))
         print(self.angleList, self.powerList, self.sigmaList)
 
     def setCurrent(self, event=None):
@@ -120,7 +124,14 @@ class ap2GUI:
         self.interpolateData()
     
     def plotData(self):
-        pass
+        plt.scatter(self.angleList, self.powerList, s=10, c='mediumorchid')
+        if self.errorVar.get():
+            plt.errorbar(self.angleList, self.powerList, yerr=self.sigmaList, fmt='none', capsize=4, c='mediumorchid')
+        plt.xlabel('Angle from surface normal / deg')
+        plt.ylabel('Power / W')
+
+        plt.tight_layout()
+        plt.show()
 
     def clearData(self):
         self.dataDict.clear()

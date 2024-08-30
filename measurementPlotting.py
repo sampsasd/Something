@@ -115,18 +115,23 @@ class plotGUI:
 
         self.clearParamsBut = Button(self.frm, text='Clear Params', style='my.TButton', command=self.clearParams)
         self.clearParamsBut.grid(column=5, row=3, padx=10, pady=20)
+        self.clearParamsBut.config(state='disabled')
 
     #==================================FUNC=================================================================
 
     def clearParams(self):
         self.paramDict.clear()
+        self.clearParamsBut.config(state='disabled')
 
     def saveParams(self):
         fName = asksaveasfilename(initialdir='./AppsNshit/Data')
         WriteJson(fName, self.paramDict)
+        self.paramDict.clear()
+        self.clearParamsBut.config(state='disabled')
 
     def appendParams(self):
         self.paramDict[self.angle] = ([self.popt[0], self.popt[1]], [[self.pcov[0][0], self.pcov[0][1]], [self.pcov[1][0], self.pcov[1][1]]])
+        self.clearParamsBut.config(state='normal')
         print(self.paramDict)
 
     def scatter(self):
@@ -185,7 +190,7 @@ class plotGUI:
         self.clearDataBut.configure(state='disabled')
 
     def readMeas(self):
-        """Reads current in mA, power and 2*std in uW.\n
+        """Reads current in mA, power and std in uW.\n
         Deletes first row of file and assumes ', ' separator"""
         
         if not self.multiVar.get():
@@ -201,7 +206,7 @@ class plotGUI:
                 if self.currentList[0] != '-':
                     self.currentList = [float(point) for point in self.currentList]
                 self.measList = [float(point) for point in self.measList]
-                self.stdList = [2*float(point) for point in self.stdList]
+                self.stdList = [float(point) for point in self.stdList]
                 self.angle = int(points[0])
             
             self.clearDataBut.configure(state='normal')
@@ -221,9 +226,9 @@ class plotGUI:
                     measTemp.remove(measTemp[0])
                     stdTemp.remove(stdTemp[0])
                     if currTemp[0] != '-':
-                        self.filesDict[i] = ([float(point) for point in currTemp], [float(point) for point in measTemp], [2*float(point) for point in stdTemp])
+                        self.filesDict[i] = ([float(point) for point in currTemp], [float(point) for point in measTemp], [float(point) for point in stdTemp])
                     else:
-                        self.filesDict[i] = (currTemp, [float(point) for point in measTemp], [2*float(point) for point in stdTemp])
+                        self.filesDict[i] = (currTemp, [float(point) for point in measTemp], [float(point) for point in stdTemp])
             self.clearDataBut.configure(state='normal')
 
     def setFilter(self, event=None):
