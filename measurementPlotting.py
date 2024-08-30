@@ -8,6 +8,8 @@ from functions import line
 from FileHandler import WriteJson, ReadJson
 from statsmodels.api import WLS
 import statsmodels.api as sm
+from statsmodels.sandbox.regression.predstd import wls_prediction_std
+import statsmodels.regression.linear_model as srlm
 
 class plotGUI:
     def __init__(self, master) -> None:
@@ -142,6 +144,8 @@ class plotGUI:
                 try:
                     self.filterData()
                     plt.scatter(self.currentListFiltered, self.measListFiltered, marker='o', s=10, c=self.mColor)
+                    plt.plot(self.currentListFiltered, self.intervalLow, color='blue', ls=':')
+                    plt.plot(self.currentListFiltered, self.intervalUp, color='blue', ls=':')
                     if self.errorVar.get():
                         plt.errorbar(self.currentListFiltered, self.measListFiltered, yerr=self.stdListFiltered, fmt='none', capsize=4, c=self.mColor)
                     plt.plot(self.currentListFiltered, self.fit, label=f'{self.popt[0]:.3e} * $I$ + {self.popt[1]:.3e}')
@@ -249,6 +253,9 @@ class plotGUI:
             wlsFit = WLS(self.measListFiltered, xDataForWLS, weights=weights).fit()
             self.popt = wlsFit.params
             self.pcov = wlsFit.cov_params()
+
+            self.prstd, self.intervalLow, self.intervalUp = wls_prediction_std(wlsFit)
+
             #self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
             print(self.popt, self.pcov)
             self.fit = [line(self.currentListFiltered[i], self.popt[1], self.popt[0]) for i in range(len(self.currentListFiltered))]
