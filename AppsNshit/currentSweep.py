@@ -38,6 +38,7 @@ class isweepGUI:
         self.running = False
         self.pmAver = 1
         self.wl = 275
+        self.ang = None
         self.master.title("Keithley 220 Current Sweep")
 
         self.fStyle = Style()
@@ -72,7 +73,7 @@ class isweepGUI:
         self.instr = self.rm.open_resource('GPIB0::12::INSTR')
         self.instr.write("F0X")
 
-        self.vLim = 5
+        self.vLim = 7
         self.instr.write(f"V{self.vLim}X")
         self.startCurrent = 10e-5
         self.stopCurrent = 1e-3
@@ -302,6 +303,10 @@ class isweepGUI:
             self.light.config(image=self.off)
             self.onOffBut.config(state='normal')
             self.stahpBut.config(state='disabled')
+            plt.scatter(self.currentList, self.pmDataList, s=10, c='mediumorchid')
+            plt.tight_layout()
+            plt.show()
+
 
     def quit(self):
         if self.running:
@@ -320,7 +325,7 @@ class isweepGUI:
             self.stahpBut.config(state='normal')
             threading.Thread(target=self.run).start()
             self.animate()
-
+            
     def run(self):
         self.instr.write("R0X")
         self.instr.write("F0X")
@@ -345,7 +350,7 @@ class isweepGUI:
                         self.instr.write(f"I{current}X")
                         self.instr.write("F1X")
                         
-                        sleep(0.5)
+                        sleep(0.1)
                         
                         self.angleList.append(self.ang)
 
@@ -369,9 +374,7 @@ class isweepGUI:
                     current = round(current + currentStep, 9)
                 self.running = False
                 self.instr.write("F0X")
-                plt.scatter(self.currentList, self.pmDataList, s=10, c='mediumorchid')
-                plt.tight_layout()
-                plt.show()
+                
                 #print(f'{self.angleList}\n{self.currentList}\n{self.pmDataList}\n{self.pmStdList}')
                 if self.saveVar.get():
                     self.save()
