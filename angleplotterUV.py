@@ -115,7 +115,7 @@ class ap2GUI:
         """Returns self.filesDict"""
         #REMEMBER TO FIX SAVE DATA IN CURRENT SWEEP TO ANGLE, CURRENT, POWER, STD
         try:
-            fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('json files', 'json'), ))
+            fileName = askopenfilename(initialdir='./AppsNshit/Data')
             self.dataDict = ReadJson(fileName)
             
             self.plotBut.config(state='normal')
@@ -130,6 +130,7 @@ class ap2GUI:
         plt.scatter(self.angleList, self.powerList, s=10, c='mediumorchid')
         if self.errorVar.get():
             plt.errorbar(self.angleList, self.powerList, yerr=self.sigmaList, fmt='none', capsize=4, c='mediumorchid')
+        plt.xticks(np.arange(-90, 91, 10))
         plt.xlabel('Angle from surface normal / deg')
         plt.ylabel('Power / W')
 
