@@ -132,9 +132,16 @@ class plotGUI:
         self.clearParamsBut.config(state='disabled')
 
     def appendParams(self):
-        self.paramDict[self.angle] = ([self.popt[0], self.popt[1]], [[self.pcov[0][0], self.pcov[0][1]], [self.pcov[1][0], self.pcov[1][1]]])
-        self.clearParamsBut.config(state='normal')
-        print(self.paramDict)
+        """WITH WLS THE PARAMETERS ARE LIKE b + ax AND NOT ax + b"""
+        if not self.multiVar.get():
+            self.paramDict[self.angle] = ([self.popt[0], self.popt[1]], [[self.pcov[0][0], self.pcov[0][1]], [self.pcov[1][0], self.pcov[1][1]]])
+            self.clearParamsBut.config(state='normal')
+            print(self.paramDict)
+        if self.multiVar.get():
+            for ang in self.poptDict:
+                self.paramDict[ang] = ([self.poptDict[ang][0][0], self.poptDict[ang][0][1]], 
+                                       [[self.poptDict[ang][1][0][0], self.poptDict[ang][1][0][1]], 
+                                        [self.poptDict[ang][1][1][0], self.poptDict[ang][1][1][1]]])
 
     def scatter(self):
         """Scatters  Power / uW as a function of current / mA"""
@@ -144,11 +151,13 @@ class plotGUI:
                 try:
                     self.filterData()
                     plt.scatter(self.currentListFiltered, self.measListFiltered, marker='o', s=10, c=self.mColor)
-                    plt.plot(self.currentListFiltered, self.intervalLow, color='blue', ls=':')
-                    plt.plot(self.currentListFiltered, self.intervalUp, color='blue', ls=':')
+                    #plt.plot(self.currentListFiltered, self.intervalLow, color='blue', ls=':')
+                    #plt.plot(self.currentListFiltered, self.intervalUp, color='blue', ls=':')
                     if self.errorVar.get():
                         plt.errorbar(self.currentListFiltered, self.measListFiltered, yerr=self.stdListFiltered, fmt='none', capsize=4, c=self.mColor)
-                    plt.plot(self.currentListFiltered, self.fit, label=f'{self.popt[0]:.3e} * $I$ + {self.popt[1]:.3e}')
+                    fitCurrent = np.linspace(0, 100e-3, 100)
+                    plotFit = line(fitCurrent, self.popt[1], self.popt[0])
+                    plt.plot(fitCurrent, plotFit, label=f'{self.popt[1]:.3e} * $I$ + {self.popt[0]:.3e}')
                     plt.xlabel('Current / A')
                     plt.ylabel('Power / W')
                     plt.legend()
@@ -165,20 +174,42 @@ class plotGUI:
                     plt.show()
                 except Exception as e:
                     print(e)
+
         if self.multiVar.get():
-            try:
-                if not self.errorVar.get():
-                    for key in self.filesDict:
-                        plt.scatter(self.filesDict[key][0], self.filesDict[key][1], marker='o', s=10, c=self.mColor)
-                if self.errorVar.get():
-                    for key in self.filesDict:
-                        plt.scatter(self.filesDict[key][0], self.filesDict[key][1], marker='o', s=10, c=self.mColor)
-                        plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
-                plt.xlabel('Current / A')
-                plt.ylabel('Power / W')
-                plt.show()
-            except Exception as e:
-                print(e)
+            if self.filterVar.get():
+                try:
+                    self.filterData()
+                    if not self.errorVar.get():
+                        for ang in self.filesDictFiltered:
+                            plt.scatter(self.filesDictFiltered[ang][0], self.filesDictFiltered[ang][1], marker='o', s=10)
+                            fitCurrent = np.linspace(0, 100e-3, 100)
+                            plotFit = line(fitCurrent, self.poptDict[ang][0][1], self.poptDict[ang][0][0])
+                            plt.plot(fitCurrent, plotFit, label=f'{self.poptDict[ang][0][1]:.3e} * $I$ + {self.poptDict[ang][0][0]:.3e}')
+                    # if self.errorVar.get():
+                    #     for key in self.filesDict:
+                    #         plt.scatter(self.filesDict[key][0], self.filesDict[key][1], marker='o', s=10, c=self.mColor)
+                    #         plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
+                    plt.xlabel('Current / A')
+                    plt.ylabel('Power / W')
+                    plt.legend()
+                    plt.show()
+                except Exception as e:
+                    print(e)
+            if not self.filterVar.get():
+                try:
+                    if not self.errorVar.get():
+                        for ang in self.filesDict:
+                            plt.scatter(self.filesDict[ang][0], self.filesDict[ang][1], marker='o', s=10)
+                    if self.errorVar.get():
+                         for key in self.filesDict:
+                             plt.scatter(self.filesDict[key][0], self.filesDict[key][1], marker='o', s=10, c=self.mColor)
+                             plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
+                    plt.xlabel('Current / A')
+                    plt.ylabel('Power / W')
+                    plt.legend()
+                    plt.show()
+                except Exception as e:
+                    print(e)
 
     def setColor(self, event=None):
         """Pretty colors for scatterplot yes :)"""
@@ -221,18 +252,18 @@ class plotGUI:
                 measTemp = []
                 stdTemp = []
                 with open(fileNameList[i], 'r') as file:
-                    for row in file:
+                    rows = list(file)
+                    rows.pop(0)
+                    for row in rows:
                         points = row.strip().split(', ')
-                        currTemp.append(points[0])
-                        measTemp.append(points[1])
-                        stdTemp.append(points[2])
-                    currTemp.remove(currTemp[0])
-                    measTemp.remove(measTemp[0])
-                    stdTemp.remove(stdTemp[0])
+                        currTemp.append(points[1])
+                        measTemp.append(points[2])
+                        stdTemp.append(points[3])
+                        angle = int(points[0])
                     if currTemp[0] != '-':
-                        self.filesDict[i] = ([float(point) for point in currTemp], [float(point) for point in measTemp], [float(point) for point in stdTemp])
+                        self.filesDict[angle] = ([float(point) for point in currTemp], [float(point) for point in measTemp], [float(point) for point in stdTemp])
                     else:
-                        self.filesDict[i] = (currTemp, [float(point) for point in measTemp], [float(point) for point in stdTemp])
+                        self.filesDict[angle] = (currTemp, [float(point) for point in measTemp], [float(point) for point in stdTemp])
             self.clearDataBut.configure(state='normal')
 
     def setFilter(self, event=None):
@@ -242,49 +273,75 @@ class plotGUI:
 
     def filterData(self, event=None):
 
-        self.currentListFiltered = self.currentList.copy()
-        self.measListFiltered = self.measList.copy()
-        self.stdListFiltered = self.stdList.copy()
+        if not self.multiVar.get():
+            self.currentListFiltered = self.currentList.copy()
+            self.measListFiltered = self.measList.copy()
+            self.stdListFiltered = self.stdList.copy()
 
-        while True:
-            newIter = False
-            weights = [1/(point**2) for point in self.stdListFiltered]
-            xDataForWLS = sm.add_constant(self.currentListFiltered)
-            wlsFit = WLS(self.measListFiltered, xDataForWLS, weights=weights).fit()
-            self.popt = wlsFit.params
-            self.pcov = wlsFit.cov_params()
+            while True:
+                newIter = False
+                weights = [1/(point**2) for point in self.stdListFiltered]
+                xDataForWLS = sm.add_constant(self.currentListFiltered)
+                wlsFit = WLS(self.measListFiltered, xDataForWLS, weights=weights).fit()
+                self.popt = wlsFit.params
+                self.pcov = wlsFit.cov_params()
 
-            self.prstd, self.intervalLow, self.intervalUp = wls_prediction_std(wlsFit)
+                self.prstd, self.intervalLow, self.intervalUp = wls_prediction_std(wlsFit)
 
-            #self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
-            print(self.popt, self.pcov)
-            self.fit = [line(self.currentListFiltered[i], self.popt[1], self.popt[0]) for i in range(len(self.currentListFiltered))]
-            #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
-            i = 0
-            while i < len(self.fit):
-                if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i]:
-                    self.currentListFiltered.remove(self.currentListFiltered[i])
-                    self.measListFiltered.remove(self.measListFiltered[i])
-                    self.stdListFiltered.remove(self.stdListFiltered[i])
-                    self.fit.remove(self.fit[i])
-                    newIter = True
-                else:
-                    i += 1
+                #self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
+                print(self.popt, self.pcov)
+                self.fit = [line(self.currentListFiltered[i], self.popt[1], self.popt[0]) for i in range(len(self.currentListFiltered))]
+                #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
+                i = 0
+                while i < len(self.fit):
+                    if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i]:
+                        self.currentListFiltered.remove(self.currentListFiltered[i])
+                        self.measListFiltered.remove(self.measListFiltered[i])
+                        self.stdListFiltered.remove(self.stdListFiltered[i])
+                        self.fit.remove(self.fit[i])
+                        newIter = True
+                    else:
+                        i += 1
 
-            if not newIter:
-                break
+                if not newIter:
+                    break
 
-        # for i in range(len(self.currentList)):
-        #     if i == 0:
-        #         self.currentListFiltered.append(self.currentList[i])
-        #         self.measListFiltered.append(self.measList[i])
-        #         self.stdListFiltered.append(self.stdList[i])
-        #     elif self.measList[i] > self.measList[i-1] + self.filterCoeff * self.measList[i-1]:
-        #         continue
-        #     else:
-        #         self.currentListFiltered.append(self.currentList[i])
-        #         self.measListFiltered.append(self.measList[i])
-        #         self.stdListFiltered.append(self.stdList[i])
+        if self.multiVar.get():
+            self.filesDictFiltered = {}
+            self.poptDict = {}
+            self.fitDict = {}
+            
+            for ang in self.filesDict:
+                self.filesDictFiltered[ang] = (self.filesDict[ang][0].copy(), self.filesDict[ang][1].copy(), self.filesDict[ang][2].copy())
+            
+            for ang in self.filesDictFiltered:
+                while True:
+                    newIter = False
+                    weights = [1/(point**2) for point in self.filesDictFiltered[ang][2]]
+                    xDataForWLS = sm.add_constant(self.filesDictFiltered[ang][0])
+                    wlsFit = WLS(self.filesDictFiltered[ang][1], xDataForWLS, weights=weights).fit()
+                    self.poptDict[ang] = wlsFit.params, wlsFit.cov_params()
+
+                    #self.prstd, self.intervalLow, self.intervalUp = wls_prediction_std(wlsFit)
+
+                    #self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
+        
+                    self.fitDict[ang] = [line(self.filesDictFiltered[ang][0][i], self.poptDict[ang][0][1], self.poptDict[ang][0][0]) for i in range(len(self.filesDictFiltered[ang][0]))]
+                    #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
+                    i = 0
+                    while i < len(self.fitDict[ang]):
+                        if self.filesDictFiltered[ang][1][i] > self.fitDict[ang][i] + self.filterCoeff * self.fitDict[ang][i]:
+                            self.filesDictFiltered[ang][0].remove(self.filesDictFiltered[ang][0][i])
+                            self.filesDictFiltered[ang][1].remove(self.filesDictFiltered[ang][1][i])
+                            self.filesDictFiltered[ang][2].remove(self.filesDictFiltered[ang][2][i])
+                            self.fitDict[ang].remove(self.fitDict[ang][i])
+                            newIter = True
+                        else:
+                            i += 1
+
+                    if not newIter:
+                        print(self.poptDict)
+                        break
 
     def DESTRUCTION(self):
         self.master.quit()
