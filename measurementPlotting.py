@@ -142,6 +142,7 @@ class plotGUI:
                 self.paramDict[ang] = ([self.poptDict[ang][0][0], self.poptDict[ang][0][1]], 
                                        [[self.poptDict[ang][1][0][0], self.poptDict[ang][1][0][1]], 
                                         [self.poptDict[ang][1][1][0], self.poptDict[ang][1][1][1]]])
+            print(self.paramDict)
 
     def scatter(self):
         """Scatters  Power / uW as a function of current / mA"""

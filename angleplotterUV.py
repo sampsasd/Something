@@ -114,14 +114,17 @@ class ap2GUI:
     def readData(self):
         """Returns self.filesDict"""
         #REMEMBER TO FIX SAVE DATA IN CURRENT SWEEP TO ANGLE, CURRENT, POWER, STD
-        fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('json files', 'json'), ))
-        self.dataDict = ReadJson(fileName)
-        
-        self.plotBut.config(state='normal')
-        self.clearBut.config(state='normal')
-        self.filesBut.config(state='disabled')
+        try:
+            fileName = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('json files', 'json'), ))
+            self.dataDict = ReadJson(fileName)
+            
+            self.plotBut.config(state='normal')
+            self.clearBut.config(state='normal')
+            self.filesBut.config(state='disabled')
 
-        self.interpolateData()
+            self.interpolateData()
+        except Exception as e:
+            print(e)
     
     def plotData(self):
         plt.scatter(self.angleList, self.powerList, s=10, c='mediumorchid')
