@@ -207,7 +207,7 @@ class plotGUI:
                              plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
                     plt.xlabel('Current / A')
                     plt.ylabel('Power / W')
-                    plt.legend()
+                    #plt.legend()
                     plt.show()
                 except Exception as e:
                     print(e)

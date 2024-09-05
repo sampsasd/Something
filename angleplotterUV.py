@@ -12,7 +12,7 @@ from FileHandler import ReadJson
 class ap2GUI:
     def __init__(self, master) -> None:
         self.master = master
-        self.master.title('Angle Plotter 2')
+        self.master.title('Angle Plotter 3')
         self.master.configure(background='black')
         self.master.state('zoomed')
 
@@ -21,6 +21,7 @@ class ap2GUI:
         self.sigmaList = []
         self.dataDict = {}
         self.current = 50e-3
+        self.incAng = '-'
 
         #==============================STYLES================================================
         self.frmStyle = Style()
@@ -84,14 +85,27 @@ class ap2GUI:
         self.currLabel = Label(self.frm, text=f'{self.current} A', style='my.TLabel')
         self.currLabel.grid(column=2, row=1, padx=5, pady=5)
 
+        self.incAngLab = Label(self.frm, text='Incident Angle: ', style='my.TLabel')
+        self.incAngLab.grid(column=0, row=2, padx=5, pady=5)
+        self.incAngEn = Entry(self.frm, style='my.TEntry')
+        self.incAngEn.bind('<Return>', self.setIncAng)
+        self.incAngEn.grid(column=1, row=2, padx=5, pady=5)
+        self.incAngLabel = Label(self.frm, text=f'{self.incAng}', style='my.TLabel')
+        self.incAngLabel.grid(column=2, row=2, padx=5, pady=5)
+
         self.filesBut = Button(self.frm, text='Select File', command=self.readData, style='my.TButton')
-        self.filesBut.grid(column=1, row=2, padx=5, pady=5)
+        self.filesBut.grid(column=1, row=3, padx=5, pady=5)
 
         self.clearBut = Button(self.frm, text='Clear Data', command=self.clearData, style='my.TButton')
-        self.clearBut.grid(column=1, row=3, padx=20, pady=20)
+        self.clearBut.grid(column=1, row=4, padx=20, pady=20)
         self.clearBut.config(state='disabled')
         
         #=======================================FUNCTIONS======================================================
+
+    def setIncAng(self, event=None):
+        self.incAng = int(self.incAngEn.get())
+        self.incAngEn.delete(0, 'end')
+        self.incAngLabel.config(text=f'{self.incAng} deg')
 
     def interpolateData(self):
         """Takes fit parameters and interpolates power and 2 sigma error for given current"""
@@ -130,9 +144,12 @@ class ap2GUI:
         plt.scatter(self.angleList, self.powerList, s=10, c='mediumorchid')
         if self.errorVar.get():
             plt.errorbar(self.angleList, self.powerList, yerr=self.sigmaList, fmt='none', capsize=4, c='mediumorchid')
+        if self.incAng != '-':
+            plt.vlines(self.incAng, 0, (max(self.powerList)+0.1*max(self.powerList)), colors='black', linewidths=1, linestyles=':', label='Incident angle')
         plt.xticks(np.arange(-90, 91, 10))
         plt.xlabel('Angle from surface normal / deg')
         plt.ylabel('Power / W')
+        plt.legend(loc=0)
 
         plt.tight_layout()
         plt.show()
