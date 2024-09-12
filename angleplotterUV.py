@@ -156,6 +156,9 @@ class ap2GUI:
 
     def clearData(self):
         self.dataDict.clear()
+        self.angleList.clear()
+        self.powerList.clear()
+        self.sigmaList.clear()
     
         self.clearBut.config(state='disabled')
         self.plotBut.config(state='disabled')

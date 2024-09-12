@@ -80,6 +80,10 @@ class ap4GUI:
         self.errorCheck = Checkbutton(self.frm, text='Errorbar', variable=self.errorVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
         self.errorCheck.grid(column=0, row=2, padx=5, pady=5)
 
+        self.removeBGVar = IntVar(value=0)
+        self.removeBGCheck = Checkbutton(self.frm, text='Remove background', variable=self.removeBGVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
+        self.removeBGCheck.grid(column=0, row=3, padx=5, pady=5)
+
         # self.fitGVar = IntVar(value=0)
         # self.fitGCheck = Checkbutton(self.frm, text='Fit spherical Gaussian', variable=self.fitGVar, onvalue=1, offvalue=0, style='my.TCheckbutton')
         # self.fitGCheck.grid(column=0, row=3, padx=5, pady=5)
@@ -93,20 +97,24 @@ class ap4GUI:
         # self.fitGCheck2.grid(column=0, row=4, padx=5, pady=5)
 
         self.fileBut = Button(self.frm, text='File(s)', style='my.TButton', command=self.readData)
-        self.fileBut.grid(column=0, row=3, padx=5, pady=5)
+        self.fileBut.grid(column=0, row=4, padx=5, pady=5)
 
         self.clearDataBut = Button(self.frm, text='Clear data', style='my.TButton', command=self.clear)
         self.clearDataBut.configure(state='disabled')
-        self.clearDataBut.grid(column=0, row=4, padx=5, pady=5)
+        self.clearDataBut.grid(column=0, row=5, padx=5, pady=5)
     
     def scatter(self):
         
         if not self.multiVar.get():
-            plt.scatter(self.refAngleList, self.measList, s=10, color='mediumorchid')
-            if self.errorVar.get():
-                plt.errorbar(self.refAngleList, self.measList, yerr=self.stdList, fmt='none', c='mediumorchid', capsize=4)
-            plt.tight_layout()
-            plt.show()
+            if not self.removeBGVar.get():
+                plt.scatter(self.refAngleList, self.measList, s=10, color='mediumorchid')
+                if self.errorVar.get():
+                    plt.errorbar(self.refAngleList, self.measList, yerr=self.stdList, fmt='none', c='mediumorchid', capsize=4)
+                plt.tight_layout()
+                plt.show()
+
+            if self.removeBGVar.get():
+                pass
 
     def readData(self):
         """Reads data from csv (angle, current, power, std) and saves to class datalist attributes (std is saved as 2 sigma)"""

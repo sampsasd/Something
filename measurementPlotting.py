@@ -295,7 +295,29 @@ class plotGUI:
                 #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
                 i = 0
                 while i < len(self.fit):
-                    if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i]:
+                    if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i] and self.measListFiltered[i] > 0:
+                        print('pos over')
+                        self.currentListFiltered.remove(self.currentListFiltered[i])
+                        self.measListFiltered.remove(self.measListFiltered[i])
+                        self.stdListFiltered.remove(self.stdListFiltered[i])
+                        self.fit.remove(self.fit[i])
+                        newIter = True
+                    elif self.measListFiltered[i] < self.fit[i] - self.filterCoeff * self.fit[i] and self.measListFiltered[i] > 0:
+                        print('pos under')
+                        self.currentListFiltered.remove(self.currentListFiltered[i])
+                        self.measListFiltered.remove(self.measListFiltered[i])
+                        self.stdListFiltered.remove(self.stdListFiltered[i])
+                        self.fit.remove(self.fit[i])
+                        newIter = True
+                    elif self.measListFiltered[i] < self.fit[i] + self.filterCoeff * self.fit[i] and self.measListFiltered[i] < 0:
+                        print('neg under')
+                        self.currentListFiltered.remove(self.currentListFiltered[i])
+                        self.measListFiltered.remove(self.measListFiltered[i])
+                        self.stdListFiltered.remove(self.stdListFiltered[i])
+                        self.fit.remove(self.fit[i])
+                        newIter = True
+                    elif self.measListFiltered[i] > self.fit[i] - self.filterCoeff * self.fit[i] and self.measListFiltered[i] < 0:
+                        print('neg over')
                         self.currentListFiltered.remove(self.currentListFiltered[i])
                         self.measListFiltered.remove(self.measListFiltered[i])
                         self.stdListFiltered.remove(self.stdListFiltered[i])
