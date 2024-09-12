@@ -124,12 +124,23 @@ class ap4GUI:
             with open(filename, 'r') as file:
                 rows = list(file)
                 rows.pop(0)
+                angleTemp = []
+                currnetTemp = []
+                measTemp = []
+                stdTemp = []
                 for row in rows:
                     points = row.strip().split(', ')
-                    self.refAngleList.append(int(points[0]))
-                    self.currentList.append(float(points[1]))
-                    self.measList.append(float(points[2]))
-                    self.stdList.append(2 * float(points[3]))
+                    angleTemp.append(int(points[0]))
+                    currnetTemp.append(float(points[1]))
+                    measTemp.append(float(points[2]))
+                    stdTemp.append(float(points[3]))
+            i = 1
+            while i < len(measTemp):
+                self.refAngleList.append(angleTemp[i])
+                self.currentList.append(currnetTemp[i])
+                self.measList.append(measTemp[i] - measTemp[i-1])
+                self.stdList.append(stdTemp[i])
+                i += 2
             self.fileBut.configure(state='disabled')
         
         self.clearDataBut.configure(state='normal')

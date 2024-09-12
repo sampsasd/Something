@@ -86,7 +86,7 @@ class plotGUI:
         self.colorLabel = Label(self.frm, text=self.mColor, style='my.TLabel')
         self.colorLabel.grid(column=3, row=0, padx=10, pady=10)
 
-        self.filterLab = Label(self.frm, text='Filter Coeff: ', style='my.TLabel')
+        self.filterLab = Label(self.frm, text='Filter: ', style='my.TLabel')
         self.filterLab.grid(column=1, row=1, padx=10, pady=10)
         self.filterEn = Entry(self.frm)
         self.filterEn.bind('<Return>', self.setFilter)
@@ -138,6 +138,7 @@ class plotGUI:
             self.clearParamsBut.config(state='normal')
             print(self.paramDict)
         if self.multiVar.get():
+            self.clearParamsBut.config(state='normal')
             for ang in self.poptDict:
                 self.paramDict[ang] = ([self.poptDict[ang][0][0], self.poptDict[ang][0][1]], 
                                        [[self.poptDict[ang][1][0][0], self.poptDict[ang][1][0][1]], 
@@ -192,7 +193,7 @@ class plotGUI:
                     #         plt.errorbar(self.filesDict[key][0], self.filesDict[key][1], yerr=self.filesDict[key][2], fmt='none', capsize=4, c=self.mColor)
                     plt.xlabel('Current / A')
                     plt.ylabel('Power / W')
-                    plt.legend()
+                    #plt.legend()
                     plt.show()
                 except Exception as e:
                     print(e)
@@ -290,33 +291,33 @@ class plotGUI:
                 self.prstd, self.intervalLow, self.intervalUp = wls_prediction_std(wlsFit)
 
                 #self.popt, self.pcov = curve_fit(line, self.currentListFiltered, self.measListFiltered)
-                print(self.popt, self.pcov)
+                #print(self.popt, self.pcov)
                 self.fit = [line(self.currentListFiltered[i], self.popt[1], self.popt[0]) for i in range(len(self.currentListFiltered))]
                 #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
                 i = 0
                 while i < len(self.fit):
-                    if self.measListFiltered[i] > self.fit[i] + self.filterCoeff * self.fit[i] and self.measListFiltered[i] > 0:
+                    if self.measListFiltered[i] > self.fit[i] + self.filterCoeff and self.fit[i] > 0:
                         print('pos over')
                         self.currentListFiltered.remove(self.currentListFiltered[i])
                         self.measListFiltered.remove(self.measListFiltered[i])
                         self.stdListFiltered.remove(self.stdListFiltered[i])
                         self.fit.remove(self.fit[i])
                         newIter = True
-                    elif self.measListFiltered[i] < self.fit[i] - self.filterCoeff * self.fit[i] and self.measListFiltered[i] > 0:
+                    elif self.measListFiltered[i] < self.fit[i] - self.filterCoeff and self.fit[i] > 0:
                         print('pos under')
                         self.currentListFiltered.remove(self.currentListFiltered[i])
                         self.measListFiltered.remove(self.measListFiltered[i])
                         self.stdListFiltered.remove(self.stdListFiltered[i])
                         self.fit.remove(self.fit[i])
                         newIter = True
-                    elif self.measListFiltered[i] < self.fit[i] + self.filterCoeff * self.fit[i] and self.measListFiltered[i] < 0:
+                    elif self.measListFiltered[i] < self.fit[i] - self.filterCoeff and self.fit[i] < 0:
                         print('neg under')
                         self.currentListFiltered.remove(self.currentListFiltered[i])
                         self.measListFiltered.remove(self.measListFiltered[i])
                         self.stdListFiltered.remove(self.stdListFiltered[i])
                         self.fit.remove(self.fit[i])
                         newIter = True
-                    elif self.measListFiltered[i] > self.fit[i] - self.filterCoeff * self.fit[i] and self.measListFiltered[i] < 0:
+                    elif self.measListFiltered[i] > self.fit[i] + self.filterCoeff and self.fit[i] < 0:
                         print('neg over')
                         self.currentListFiltered.remove(self.currentListFiltered[i])
                         self.measListFiltered.remove(self.measListFiltered[i])
@@ -353,7 +354,25 @@ class plotGUI:
                     #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
                     i = 0
                     while i < len(self.fitDict[ang]):
-                        if self.filesDictFiltered[ang][1][i] > self.fitDict[ang][i] + self.filterCoeff * self.fitDict[ang][i]:
+                        if self.filesDictFiltered[ang][1][i] > self.fitDict[ang][i] + self.filterCoeff and self.fitDict[ang][i] > 0:
+                            self.filesDictFiltered[ang][0].remove(self.filesDictFiltered[ang][0][i])
+                            self.filesDictFiltered[ang][1].remove(self.filesDictFiltered[ang][1][i])
+                            self.filesDictFiltered[ang][2].remove(self.filesDictFiltered[ang][2][i])
+                            self.fitDict[ang].remove(self.fitDict[ang][i])
+                            newIter = True
+                        elif self.filesDictFiltered[ang][1][i] < self.fitDict[ang][i] - self.filterCoeff and self.fitDict[ang][i] > 0:
+                            self.filesDictFiltered[ang][0].remove(self.filesDictFiltered[ang][0][i])
+                            self.filesDictFiltered[ang][1].remove(self.filesDictFiltered[ang][1][i])
+                            self.filesDictFiltered[ang][2].remove(self.filesDictFiltered[ang][2][i])
+                            self.fitDict[ang].remove(self.fitDict[ang][i])
+                            newIter = True
+                        elif self.filesDictFiltered[ang][1][i] < self.fitDict[ang][i] - self.filterCoeff and self.fitDict[ang][i] < 0:
+                            self.filesDictFiltered[ang][0].remove(self.filesDictFiltered[ang][0][i])
+                            self.filesDictFiltered[ang][1].remove(self.filesDictFiltered[ang][1][i])
+                            self.filesDictFiltered[ang][2].remove(self.filesDictFiltered[ang][2][i])
+                            self.fitDict[ang].remove(self.fitDict[ang][i])
+                            newIter = True
+                        elif self.filesDictFiltered[ang][1][i] > self.fitDict[ang][i] + self.filterCoeff and self.fitDict[ang][i] < 0:
                             self.filesDictFiltered[ang][0].remove(self.filesDictFiltered[ang][0][i])
                             self.filesDictFiltered[ang][1].remove(self.filesDictFiltered[ang][1][i])
                             self.filesDictFiltered[ang][2].remove(self.filesDictFiltered[ang][2][i])
@@ -363,7 +382,7 @@ class plotGUI:
                             i += 1
 
                     if not newIter:
-                        print(self.poptDict)
+                        #print(self.poptDict)
                         break
 
     def DESTRUCTION(self):
