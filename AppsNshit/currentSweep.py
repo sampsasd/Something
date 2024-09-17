@@ -28,7 +28,7 @@ class isweepGUI:
     def __init__(self, master) -> None:
         
         self.master = master
-        self.master.state('zoomed')
+        #self.master.state('zoomed')
         self.master.configure(background='#f0f0f0')
         self.master.protocol('WM_DELETE_WINDOW', self.quit)
         self.instr = None
