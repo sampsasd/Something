@@ -110,6 +110,8 @@ class ap4GUI:
                 plt.scatter(self.refAngleList, self.measList, s=10, color='mediumorchid')
                 if self.errorVar.get():
                     plt.errorbar(self.refAngleList, self.measList, yerr=self.stdList, fmt='none', c='mediumorchid', capsize=4)
+                plt.xlabel('Angle from surface normal / deg')
+                plt.ylabel('Power / W')
                 plt.tight_layout()
                 plt.show()
 
