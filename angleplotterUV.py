@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from FileHandler import ReadJson
 
+
 class ap2GUI:
     def __init__(self, master) -> None:
         self.master = master
@@ -22,6 +23,7 @@ class ap2GUI:
         self.dataDict = {}
         self.current = 50e-3
         self.incAng = '-'
+        self.integral = '-'
 
         #==============================STYLES================================================
         self.frmStyle = Style()
@@ -77,30 +79,40 @@ class ap2GUI:
         self.errorCheck = Checkbutton(self.frm, text='Errorbars', style='my.TCheckbutton', variable=self.errorVar, onvalue=1, offvalue=0)
         self.errorCheck.grid(column=2, row=0, padx=5, pady=5)
 
+        self.integralBut = Button(self.frm, text='Integrate', command=self.integrate, style='my.TButton')
+        self.integralBut.grid(column=1, row=1, padx=5, pady=5)
+        self.integralLabel = Label(self.frm, text=f'{self.integral}', style='my.TLabel')
+        self.integralLabel.grid(column=2, row=1, padx=5, pady=5)
+
         self.currLab = Label(self.frm, text='Current: ', style='my.TLabel')
-        self.currLab.grid(column=0, row=1, padx=5, pady=5)
+        self.currLab.grid(column=0, row=2, padx=5, pady=5)
         self.currEn = Entry(self.frm, style='my.TEntry')
         self.currEn.bind('<Return>', self.setCurrent)
-        self.currEn.grid(column=1, row=1, padx=5, pady=5)
+        self.currEn.grid(column=1, row=2, padx=5, pady=5)
         self.currLabel = Label(self.frm, text=f'{self.current} A', style='my.TLabel')
-        self.currLabel.grid(column=2, row=1, padx=5, pady=5)
+        self.currLabel.grid(column=2, row=2, padx=5, pady=5)
 
         self.incAngLab = Label(self.frm, text='Incident Angle: ', style='my.TLabel')
-        self.incAngLab.grid(column=0, row=2, padx=5, pady=5)
+        self.incAngLab.grid(column=0, row=3, padx=5, pady=5)
         self.incAngEn = Entry(self.frm, style='my.TEntry')
         self.incAngEn.bind('<Return>', self.setIncAng)
-        self.incAngEn.grid(column=1, row=2, padx=5, pady=5)
+        self.incAngEn.grid(column=1, row=3, padx=5, pady=5)
         self.incAngLabel = Label(self.frm, text=f'{self.incAng}', style='my.TLabel')
-        self.incAngLabel.grid(column=2, row=2, padx=5, pady=5)
+        self.incAngLabel.grid(column=2, row=3, padx=5, pady=5)
 
         self.filesBut = Button(self.frm, text='Select File', command=self.readData, style='my.TButton')
-        self.filesBut.grid(column=1, row=3, padx=5, pady=5)
+        self.filesBut.grid(column=1, row=4, padx=5, pady=5)
 
         self.clearBut = Button(self.frm, text='Clear Data', command=self.clearData, style='my.TButton')
-        self.clearBut.grid(column=1, row=4, padx=20, pady=20)
+        self.clearBut.grid(column=1, row=5, padx=20, pady=20)
         self.clearBut.config(state='disabled')
         
         #=======================================FUNCTIONS======================================================
+
+    def integrate(self):
+        """This is an integral trust me bro"""
+        self.integral = sum(self.powerList)
+        self.integralLabel.config(text=f'{self.integral:.3e}')
 
     def setIncAng(self, event=None):
         self.incAng = int(self.incAngEn.get())
