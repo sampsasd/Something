@@ -23,6 +23,16 @@ def readBlueData():
     """Returns [angleList, powerList, stdList]"""
     pass
 
+def saveSum(sDensityList, sumList):
+    """Saves Riemann sum as funnction of surface density to a csv"""
+    pass
+
+def readSum():
+    """Returns thicknessList, sumList"""
+    pass
+
+#===============================================================================================0
+
 
 
 def plotCurrentsweepData(angle, currentList, powerList, filter = None, stdList = None):
@@ -45,10 +55,13 @@ def riemannSum(distData):
     """Returns Riemann sum of distribution"""
     pass
 
-def saveSum(sDensityList, sumList):
-    """Saves Riemann sum as funnction of surface density to a csv"""
+def plotSumVsThick(thicknessList, sumList):
+    """Plots Riemann sum as function of coating thickness"""
     pass
 
+
+
+#============================================================================================================
 
 def main():
     pass
