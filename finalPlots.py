@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 from tkinter.filedialog import askopenfilename, askopenfilenames
 
 #FINAL PLOTS FOR GRADU
+#direct uv current sweep with and without filter, uv current sweep, filtered sweep, 
+#   angle distribution with and without filter, combined conversion dist
+#blue angle distribution
+#blue specular peak height as function of coating thickness (relative?)
+#blue Riemann sum as function of coating thickness
+#Riemann sum of combined conversion dist as a function of coating thickness
 
 
 def readCurrentSweepData():
@@ -37,6 +43,10 @@ def plotAngleDistBLUE(angleList, powerList, stdList = None):
 
 def riemannSum(distData):
     """Returns Riemann sum of distribution"""
+    pass
+
+def saveSum(sDensityList, sumList):
+    """Saves Riemann sum as funnction of surface density to a csv"""
     pass
 
 
