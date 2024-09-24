@@ -46,10 +46,12 @@ def readCurrentSweepData():
     return filesDict
 
 def readParamsData():
-    """Returns dict with angle key and wls fit params"""
-    fileName = askopenfilename(initialdir='./AppsNshit/Data')
-    dataDict = ReadJson(fileName)
-    return dataDict
+    """Returns list of dicts with angle key and wls fit params"""
+    fileNameList = askopenfilenames(initialdir='./AppsNshit/Data')
+    dataDictList = []
+    for file in fileNameList:
+        dataDictList.append(ReadJson(file))
+    return dataDictList
 
 def readBlueData():
     """Returns [angleList, powerList, stdList]"""
@@ -182,9 +184,13 @@ def thirtySixtyCombineUV(paramsDict30, paramsDict60):
     Returns full angle distribution."""
     pass
 
-def plotAngleDistUV(paramsDict, incAng = None):
+def plotAngleDistUV(incAng = None):
     """Plots angle distribbution for uv and marks incident angle to plot if specified"""
-    pDict = readParamsData(paramsDict)
+    try:
+        paramsDict = readParamsData()
+
+    except Exception as e:
+        print(e)
 
 def plotAngleDistBLUE(angleList, powerList, stdList = None):
     pass
@@ -206,9 +212,13 @@ def plotSumVsThick(thicknessList, sumList):
 
 def main():
     #UV STUFF==============================================
+
+    #Current sweep
     filesDict = readCurrentSweepData()
     plotCurrentsweepData(filesDict=filesDict)
     plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
+
+    #Angle dist
 
 
 
