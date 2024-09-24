@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from FileHandler import ReadJson
+from statsmodels.api import WLS
+import statsmodels.api as sm
+from functions import line
 
 #FINAL PLOTS FOR GRADU
 #direct uv current sweep with and without filter
@@ -21,11 +24,11 @@ def readCurrentSweepData():
         Deletes first row of file and assumes ', ' separator"""
         
     fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
+    filesDict = {}
     for i in range(len(fileNameList)):
         currTemp = []
         measTemp = []
         stdTemp = []
-        filesDict = {}
         with open(fileNameList[i], 'r') as file:
             rows = list(file)
             rows.pop(0)
@@ -39,6 +42,7 @@ def readCurrentSweepData():
                 filesDict[angle] = ([float(point) for point in currTemp], [float(point) for point in measTemp], [float(point) for point in stdTemp])
             else:
                 filesDict[angle] = (currTemp, [float(point) for point in measTemp], [float(point) for point in stdTemp])
+    
     return filesDict
 
 def readParamsData():
@@ -86,18 +90,91 @@ def readSum():
 
 #===============================================================================================0
 
+def filterData(filesDict, filter):
+    """Filters current sweep data based on datapoint distance of weighted least squares fit.
+    \nWLS FIT IS B+AX NOT AX+B"""
 
+    filesDictFiltered = {}
+    poptDict = {}
+    fitDict = {}
+    
+    for ang in filesDict:
+        filesDictFiltered[ang] = (filesDict[ang][0].copy(), filesDict[ang][1].copy(), filesDict[ang][2].copy())
+    
+    for ang in filesDictFiltered:
+        while True:
+            newIter = False
+            weights = [1/(point**2) for point in filesDictFiltered[ang][2]]
+            xDataForWLS = sm.add_constant(filesDictFiltered[ang][0])
+            wlsFit = WLS(filesDictFiltered[ang][1], xDataForWLS, weights=weights).fit()
+            poptDict[ang] = wlsFit.params, wlsFit.cov_params()
 
+            #prstd, intervalLow, intervalUp = wls_prediction_std(wlsFit)
+
+            #popt, pcov = curve_fit(line, currentListFiltered, measListFiltered)
+
+            fitDict[ang] = [line(filesDictFiltered[ang][0][i], poptDict[ang][0][1], poptDict[ang][0][0]) for i in range(len(filesDictFiltered[ang][0]))]
+            #ERRORS HERE U DUMB FUCK=============================================================================================================================================================================================
+            i = 0
+            while i < len(fitDict[ang]):
+                if filesDictFiltered[ang][1][i] > fitDict[ang][i] + filter and fitDict[ang][i] > 0:
+                    filesDictFiltered[ang][0].remove(filesDictFiltered[ang][0][i])
+                    filesDictFiltered[ang][1].remove(filesDictFiltered[ang][1][i])
+                    filesDictFiltered[ang][2].remove(filesDictFiltered[ang][2][i])
+                    fitDict[ang].remove(fitDict[ang][i])
+                    newIter = True
+                elif filesDictFiltered[ang][1][i] < fitDict[ang][i] - filter and fitDict[ang][i] > 0:
+                    filesDictFiltered[ang][0].remove(filesDictFiltered[ang][0][i])
+                    filesDictFiltered[ang][1].remove(filesDictFiltered[ang][1][i])
+                    filesDictFiltered[ang][2].remove(filesDictFiltered[ang][2][i])
+                    fitDict[ang].remove(fitDict[ang][i])
+                    newIter = True
+                elif filesDictFiltered[ang][1][i] < fitDict[ang][i] - filter and fitDict[ang][i] < 0:
+                    filesDictFiltered[ang][0].remove(filesDictFiltered[ang][0][i])
+                    filesDictFiltered[ang][1].remove(filesDictFiltered[ang][1][i])
+                    filesDictFiltered[ang][2].remove(filesDictFiltered[ang][2][i])
+                    fitDict[ang].remove(fitDict[ang][i])
+                    newIter = True
+                elif filesDictFiltered[ang][1][i] > fitDict[ang][i] + filter and fitDict[ang][i] < 0:
+                    filesDictFiltered[ang][0].remove(filesDictFiltered[ang][0][i])
+                    filesDictFiltered[ang][1].remove(filesDictFiltered[ang][1][i])
+                    filesDictFiltered[ang][2].remove(filesDictFiltered[ang][2][i])
+                    fitDict[ang].remove(fitDict[ang][i])
+                    newIter = True
+                else:
+                    i += 1
+
+            if not newIter:
+                #print(poptDict)
+                break
+    return filesDictFiltered, poptDict
+
+#MAYBE CHANGE UNITS IN PLOTS
 def plotCurrentsweepData(filesDict, filter = None, errorbar = None):
     """Plots UV current sweep data with or without filter (filter should be given in watts)"""
     
     if filter is None:
+
         for angle in filesDict:
-            plt.scatter(filesDict[angle][0], filesDict[angle][1], c='mediumorchid', marker='.', markersize=4, label=f'{angle}')
-        plt.xlabel('Current / A')
-        plt.ylabel('Power / W')
-        plt.tight_layout()
-        plt.show()
+            plt.scatter(filesDict[angle][0], filesDict[angle][1], marker='o', s=8, label=f'{angle}'+'$^{\mathrm{\circ}}$')
+
+    elif filter is not None:
+
+        filesDictFiltered = filterData(filesDict=filesDict, filter=filter)[0]
+        poptDict = filterData(filesDict=filesDict, filter=filter)[1]
+        currentLin = np.linspace(0, 100e-3, 100)
+        
+        for angle in filesDictFiltered:
+            plt.scatter(filesDictFiltered[angle][0], filesDictFiltered[angle][1], marker='o', s=8, label=f'{angle}')
+            fit = line(currentLin, poptDict[angle][0][1], poptDict[angle][0][0])
+            plt.plot(currentLin, fit)
+
+    plt.xlabel('Current / A')
+    plt.ylabel('Power / W')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
 
 def thirtySixtyCombineUV(paramsDict30, paramsDict60):
     """Completes conversion distribution using
@@ -106,7 +183,8 @@ def thirtySixtyCombineUV(paramsDict30, paramsDict60):
     pass
 
 def plotAngleDistUV(paramsDict, incAng = None):
-    pass
+    """Plots angle distribbution for uv and marks incident angle to plot if specified"""
+    pDict = readParamsData(paramsDict)
 
 def plotAngleDistBLUE(angleList, powerList, stdList = None):
     pass
@@ -125,8 +203,14 @@ def plotSumVsThick(thicknessList, sumList):
 
 #============================================================================================================
 
+
 def main():
-    pass
+    #UV STUFF==============================================
+    filesDict = readCurrentSweepData()
+    plotCurrentsweepData(filesDict=filesDict)
+    plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
+
+
 
 if __name__ == '__main__':
     main()
