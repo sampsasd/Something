@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
 
-thiccboi = [0, 5, 10, 20, 40, 80]
-fatboi = [1.062, 1.619, 2.138, 2.685, 4.138, 4.375]
+thiccboi = [0, 4.96, 10.035, 20.18, 29.74, 41.42, 88.06]
+fatboi = [1.062, 1.619, 2.138, 2.685, 3.662, 4.138, 4.375]
 
-plt.scatter(thiccboi, fatboi, c='mediumorchid')
-plt.xlabel('Thicc / ug/cm2')
-plt.ylabel("Conversion area / i don't fucking know")
+plt.scatter(thiccboi, fatboi, c='deepskyblue')
+plt.xlabel('Surface density / ug/cm$^{2}$')
+plt.ylabel("Area of conversion dist")
 plt.tight_layout()
 plt.show()
