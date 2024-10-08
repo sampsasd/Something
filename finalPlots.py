@@ -273,6 +273,11 @@ def simps(angleListList, dataListList):
     print(simpList)
     return simpList
 
+def plotSimps(thiccList, simpList):
+    pass
+
+
+
 def riemannSum(distData):
     """Returns Riemann sum of distribution"""
     pass
