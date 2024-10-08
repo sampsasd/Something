@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from FileHandler import ReadJson
 from statsmodels.api import WLS
 import statsmodels.api as sm
 from functions import line
+from scipy.integrate import simpson
 
 #FINAL PLOTS FOR GRADU
 #direct uv current sweep with and without filter
@@ -16,6 +18,11 @@ from functions import line
 #blue Riemann sum as function of coating thickness
 
 #Riemann sum of combined conversion dist as a function of coating thickness
+
+settings = {'plotCurrentSweep': 0, 
+            'plotBlueDist': 0, 
+            'plotUVDist': 0,
+            'plotUVSimps': 0}
 
 
 def readCurrentSweepData():
@@ -92,6 +99,15 @@ def readSum():
 
 #===============================================================================================0
 
+def powerPerSolidAngle(powerList):
+    
+    sensorArea = np.pi * (9.5e-3 / 2)**2
+    distToSensor = 10e-2
+    solidAngle = sensorArea / (distToSensor**2)
+    print(solidAngle)
+
+    return [point / solidAngle for point in powerList]
+
 def filterData(filesDict, filter):
     """Filters current sweep data based on datapoint distance of weighted least squares fit.
     \nWLS FIT IS B+AX NOT AX+B"""
@@ -151,6 +167,17 @@ def filterData(filesDict, filter):
                 break
     return filesDictFiltered, poptDict
 
+def interpolateData(paramsDict, current):
+        """Takes fit parameters and interpolates power and 2 sigma error for given current"""
+        angleList = []
+        powerList = []
+        sigmaList = []
+        for angle in paramsDict:
+            angleList.append(int(angle))
+            powerList.append(paramsDict[angle][0][1] * current)
+            sigmaList.append(2 * np.sqrt(paramsDict[angle][1][1][1]) * current + 2 * np.sqrt(paramsDict[angle][1][0][0]))
+        return angleList, powerList, sigmaList
+
 #MAYBE CHANGE UNITS IN PLOTS
 def plotCurrentsweepData(filesDict, filter = None, errorbar = None):
     """Plots UV current sweep data with or without filter (filter should be given in watts)"""
@@ -184,16 +211,67 @@ def thirtySixtyCombineUV(paramsDict30, paramsDict60):
     Returns full angle distribution."""
     pass
 
-def plotAngleDistUV(incAng = None):
-    """Plots angle distribbution for uv and marks incident angle to plot if specified"""
+def plotAngleDistUV(yAxisExp=-7, incAng = None, multi=False):
+    """Plots angle distribution for uv and marks incident angle to plot if specified"""
     try:
-        paramsDict = readParamsData()
+        if not multi:
+            paramsDict = readParamsData()[0]
+            angleList = interpolateData(paramsDict, 50e-3)[0]
+            powerList = interpolateData(paramsDict, 50e-3)[1]
+            stdList = interpolateData(paramsDict, 50e-3)[2]
+
+            powerListSA = powerPerSolidAngle(powerList)
+            stdListSA = powerPerSolidAngle(stdList)
+
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            ax.scatter(angleList, powerListSA)
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+            #ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1e'))
+
+        plt.xlim(-90, 90)
+        plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
+        plt.xlabel('$\\beta$ / deg')
+        plt.ylabel('$I$ / W$\cdot$sr$^{-1}$')
+        plt.tight_layout()
+        plt.show()
 
     except Exception as e:
         print(e)
 
-def plotAngleDistBLUE(angleList, powerList, stdList = None):
-    pass
+def plotAngleDistBLUE(yAxisExp=-5, multi=False):
+    
+    try:
+        if not multi:
+            data = readBlueData()
+            angleList = data[0]
+            powerList = data[1]
+            stdList = data[2]
+
+            powerListSA = powerPerSolidAngle(powerList)
+            stdListSA = powerPerSolidAngle(stdList)
+
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            ax.scatter(angleList, powerListSA)
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+        
+        plt.xlim((-90, 90))
+        plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
+        plt.xlabel('$\\beta$ / deg')
+        plt.ylabel('$I$ / W$\cdot$sr$^{-1}$')
+        plt.tight_layout()
+        plt.show()
+    except Exception as e:
+        print(e)
+
+def simps(angleListList, dataListList):
+    simpList = []
+    for i in range(len(dataListList)):
+        simp = simpson(dataListList[i], x=angleListList[i])
+        simpList.append(simp)
+    print(simpList)
+    return simpList
 
 def riemannSum(distData):
     """Returns Riemann sum of distribution"""
@@ -214,11 +292,24 @@ def main():
     #UV STUFF==============================================
 
     #Current sweep
-    filesDict = readCurrentSweepData()
-    plotCurrentsweepData(filesDict=filesDict)
-    plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
+    if settings['plotCurrentSweep']:
+        filesDict = readCurrentSweepData()
+        plotCurrentsweepData(filesDict=filesDict)
+        plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
 
     #Angle dist
+    if settings['plotBlueDist']:
+        plotAngleDistBLUE()
+
+    if settings['plotUVDist']:
+        plotAngleDistUV()
+
+    #SIMPS
+    if settings['plotUVSimps']:
+        plist = readParamsData()
+        anglelistlist = [interpolateData(l, 50e-3)[0] for l in plist]
+        datalistlist = [interpolateData(l, 50e-3)[1] for l in plist]
+        simps(anglelistlist, datalistlist)
 
 
 
