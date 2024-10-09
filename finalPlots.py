@@ -112,7 +112,7 @@ def powerPerSolidAngle(powerList):
     sensorArea = np.pi * (9.5e-3 / 2)**2
     distToSensor = 10e-2
     solidAngle = sensorArea / (distToSensor**2)
-    print(solidAngle)
+    #print(solidAngle)
 
     return [point / solidAngle for point in powerList]
 
@@ -262,7 +262,7 @@ def plotAngleDistUV(yAxisExp=-7, incAng = None, multi=False):
     except Exception as e:
         print(e)
 
-def plotAngleDistBLUE(yAxisExp=-5, multi=False, number=8):
+def plotAngleDistBLUE(yAxisExp=-5, multi=False):
     
     try:
         if not multi:
@@ -285,20 +285,39 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False, number=8):
             stdLists = []
 
             datalists = readBlueData()
+
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+
+            specList = []
+            sumList = []
+            sumNoSpecList = []
             for dataset in datalists:
-                angleList = data[0]
-                powerList = powerPerSolidAngle(data[1])
-                stdList = powerPerSolidAngle(data[2])
+                angleList = dataset[0]
+                powerList = powerPerSolidAngle(dataset[1])
+                stdList = powerPerSolidAngle(dataset[2])
 
                 angleLists.append(angleList)
                 powerLists.append(powerList)
                 stdLists.append(stdList)
+
+                ax.scatter(angleList, powerList)
+                specList.append(max(dataset[1]))
+                sumList.append(riemannSum(dataset[1]))
+                sumNoSpecList.append(riemannSum(dataset[1], excludeSpecular=True))
+            print(specList, '\n', sumList, '\n', sumNoSpecList, '\n')
+            specList, sumList, sumNoSpecList = zip(*sorted(zip(specList, sumList, sumNoSpecList)))
+            print('\n', specList, '\n', sumList, '\n', sumNoSpecList)
+
         plt.xlim((-90, 90))
         plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
         plt.xlabel('$\\beta$ / deg')
         plt.ylabel('$I$ / W$\cdot$sr$^{-1}$')
         plt.tight_layout()
         plt.show()
+        if multi:
+            return specList
     except Exception as e:
         print(e)
 
@@ -325,9 +344,12 @@ def plotSimps(thiccList, simpList):
     plt.show()
 
 
-def riemannSum(distData):
+def riemannSum(powerList, excludeSpecular=False):
     """Returns Riemann sum of distribution"""
-    pass
+    if excludeSpecular:
+        powerList.remove(max(powerList))
+    sumsum = sum(powerList)
+    return sumsum
 
 def plotSumVsThick(thicknessList, sumList):
     """Plots Riemann sum as function of coating thickness"""
@@ -342,6 +364,7 @@ def plotSumVsThick(thicknessList, sumList):
 
 def main():
     try:
+        thiccList = [0, 4.96, 10.035, 20.18, 29.74, 41.42, 88.06, 155.8]
         #UV STUFF==============================================
 
         #Current sweep
@@ -355,7 +378,14 @@ def main():
             plotAngleDistBLUE()
         
         if settings['plotBlueDistMulti']:
-            plotAngleDistBLUE(multi=True)
+            asd = plotAngleDistBLUE(multi=True)
+            qwe = thiccList[::-1]
+            if len(asd) == 8:
+                plt.scatter(qwe, asd)
+                plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+                plt.ylabel('Specular reflection power / W')
+                plt.tight_layout()
+                plt.show()
 
         if settings['plotUVDist']:
             plotAngleDistUV()
