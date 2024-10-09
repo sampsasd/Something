@@ -7,6 +7,7 @@ from statsmodels.api import WLS
 import statsmodels.api as sm
 from functions import line
 from scipy.integrate import simpson
+from time import sleep
 
 #FINAL PLOTS FOR GRADU
 #direct uv current sweep with and without filter
@@ -18,10 +19,14 @@ from scipy.integrate import simpson
 #blue Riemann sum as function of coating thickness
 
 #Riemann sum of combined conversion dist as a function of coating thickness
+#
+#Section of the solid angle distribution at the plane of incident light beam
 
 settings = {'plotCurrentSweep': 0, 
             'plotBlueDist': 0, 
-            'plotUVDist': 0,
+            'plotBlueDistMulti': 1, 
+            'plotUVDist': 0, 
+            'plotUVDistMulti': 0,
             'plotUVSimps': 0}
 
 
@@ -30,7 +35,7 @@ def readCurrentSweepData():
     """Reads current in mA, power and std in uW.\n
         Deletes first row of file and assumes ', ' separator"""
         
-    fileNameList = askopenfilenames(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
+    fileNameList = askopenfilenames(initialdir='./AppsNshit/DataPrganized', filetypes=(('csv files', 'csv'), ))
     filesDict = {}
     for i in range(len(fileNameList)):
         currTemp = []
@@ -54,40 +59,43 @@ def readCurrentSweepData():
 
 def readParamsData():
     """Returns list of dicts with angle key and wls fit params"""
-    fileNameList = askopenfilenames(initialdir='./AppsNshit/Data')
+    fileNameList = askopenfilenames(initialdir='./AppsNshit/DataOrganized')
     dataDictList = []
     for file in fileNameList:
         dataDictList.append(ReadJson(file))
     return dataDictList
 
 def readBlueData():
-    """Returns [angleList, powerList, stdList]"""
-    filename = askopenfilename(initialdir='./AppsNshit/Data', filetypes=(('csv files', 'csv'), ))
-    with open(filename, 'r') as file:
-        rows = list(file)
-        rows.pop(0)
-        angleTemp = []
-        currnetTemp = []
-        measTemp = []
-        stdTemp = []
-        for row in rows:
-            points = row.strip().split(', ')
-            angleTemp.append(int(points[0]))
-            currnetTemp.append(float(points[1]))
-            measTemp.append(float(points[2]))
-            stdTemp.append(float(points[3]))
-    refAngleList = []
-    currentList = []
-    measList = []
-    stdList = []
-    i = 1
-    while i < len(measTemp):
-        refAngleList.append(angleTemp[i])
-        currentList.append(currnetTemp[i])
-        measList.append(measTemp[i] - measTemp[i-1])
-        stdList.append(stdTemp[i])
-        i += 2
-    return refAngleList, measList, stdList
+    """Returns list of [angleList, powerList, stdList] elements"""
+    dataListList = []
+    filename = askopenfilenames(initialdir='./AppsNshit/DataOrganized', filetypes=(('csv files', 'csv'), ))
+    for name in filename:
+        with open(name, 'r') as file:
+            rows = list(file)
+            rows.pop(0)
+            angleTemp = []
+            currnetTemp = []
+            measTemp = []
+            stdTemp = []
+            for row in rows:
+                points = row.strip().split(', ')
+                angleTemp.append(int(points[0]))
+                currnetTemp.append(float(points[1]))
+                measTemp.append(float(points[2]))
+                stdTemp.append(float(points[3]))
+        refAngleList = []
+        currentList = []
+        measList = []
+        stdList = []
+        i = 1
+        while i < len(measTemp):
+            refAngleList.append(angleTemp[i])
+            currentList.append(currnetTemp[i])
+            measList.append(measTemp[i] - measTemp[i-1])
+            stdList.append(stdTemp[i])
+            i += 2
+        dataListList.append([refAngleList, measList, stdList])
+    return dataListList
 
 def saveSum(sDensityList, sumList):
     """Saves Riemann sum as funnction of surface density to a csv"""
@@ -228,6 +236,21 @@ def plotAngleDistUV(yAxisExp=-7, incAng = None, multi=False):
             ax.scatter(angleList, powerListSA)
             ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
             #ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1e'))
+        elif multi:
+            paramsDictList = readParamsData()
+            angleLists = []
+            powerLists = []
+            stdLists = []
+            for dic in paramsDictList:
+                angleLists.append(interpolateData(dic, 50e-3)[0])
+                powerLists.append(powerPerSolidAngle(interpolateData(dic, 50e-3)[1]))
+                stdLists.append(powerPerSolidAngle(interpolateData(dic, 50e-3)[2]))
+
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            for i in range(len(angleLists)):
+                ax.scatter(angleLists[i], powerLists[i])
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
 
         plt.xlim(-90, 90)
         plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
@@ -239,11 +262,11 @@ def plotAngleDistUV(yAxisExp=-7, incAng = None, multi=False):
     except Exception as e:
         print(e)
 
-def plotAngleDistBLUE(yAxisExp=-5, multi=False):
+def plotAngleDistBLUE(yAxisExp=-5, multi=False, number=8):
     
     try:
         if not multi:
-            data = readBlueData()
+            data = readBlueData()[0]
             angleList = data[0]
             powerList = data[1]
             stdList = data[2]
@@ -256,6 +279,20 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
             ax.scatter(angleList, powerListSA)
             ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
         
+        elif multi:
+            angleLists = []
+            powerLists = []
+            stdLists = []
+
+            datalists = readBlueData()
+            for dataset in datalists:
+                angleList = data[0]
+                powerList = powerPerSolidAngle(data[1])
+                stdList = powerPerSolidAngle(data[2])
+
+                angleLists.append(angleList)
+                powerLists.append(powerList)
+                stdLists.append(stdList)
         plt.xlim((-90, 90))
         plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
         plt.xlabel('$\\beta$ / deg')
@@ -270,12 +307,22 @@ def simps(angleListList, dataListList):
     for i in range(len(dataListList)):
         simp = simpson(dataListList[i], x=angleListList[i])
         simpList.append(simp)
+    simpList.sort()
     print(simpList)
     return simpList
 
 def plotSimps(thiccList, simpList):
-    pass
-
+    
+    fig, ax = plt.subplots(1, 1)
+    fig.set_size_inches((9, 6))
+    ax.scatter(thiccList, simpList)
+    #ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10e-6))
+    #plt.xlim((-90, 90))
+    #plt.ticklabel_format(axis='y', scilimits=(0, 0))
+    plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+    plt.ylabel('Integral of angle distribution')
+    plt.tight_layout()
+    plt.show()
 
 
 def riemannSum(distData):
@@ -294,27 +341,39 @@ def plotSumVsThick(thicknessList, sumList):
 
 
 def main():
-    #UV STUFF==============================================
+    try:
+        #UV STUFF==============================================
 
-    #Current sweep
-    if settings['plotCurrentSweep']:
-        filesDict = readCurrentSweepData()
-        plotCurrentsweepData(filesDict=filesDict)
-        plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
+        #Current sweep
+        if settings['plotCurrentSweep']:
+            filesDict = readCurrentSweepData()
+            plotCurrentsweepData(filesDict=filesDict)
+            plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
 
-    #Angle dist
-    if settings['plotBlueDist']:
-        plotAngleDistBLUE()
+        #Angle dist
+        if settings['plotBlueDist']:
+            plotAngleDistBLUE()
+        
+        if settings['plotBlueDistMulti']:
+            plotAngleDistBLUE(multi=True)
 
-    if settings['plotUVDist']:
-        plotAngleDistUV()
+        if settings['plotUVDist']:
+            plotAngleDistUV()
+        
+        if settings['plotUVDistMulti']:
+            plotAngleDistUV(multi=True)
 
-    #SIMPS
-    if settings['plotUVSimps']:
-        plist = readParamsData()
-        anglelistlist = [interpolateData(l, 50e-3)[0] for l in plist]
-        datalistlist = [interpolateData(l, 50e-3)[1] for l in plist]
-        simps(anglelistlist, datalistlist)
+        #SIMPS
+        if settings['plotUVSimps']:
+            thiccList = [0, 4.96, 10.035, 20.18, 29.74, 41.42, 88.06, 155.8]
+            plist = readParamsData()
+            anglelistlist = [interpolateData(l, 50e-3)[0] for l in plist]
+            datalistlist = [interpolateData(l, 50e-3)[1] for l in plist]
+            simpList = simps(anglelistlist, datalistlist)
+
+            plotSimps(thiccList, simpList)
+    except Exception as e:
+        print(e)
 
 
 

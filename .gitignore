@@ -5,3 +5,5 @@ plots/*
 !off.png
 *.csv
 Data/*
+AppsNshit/DataOrganized/*
+*.json
