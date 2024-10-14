@@ -24,10 +24,11 @@ from time import sleep
 
 settings = {'plotCurrentSweep': 0, 
             'plotBlueDist': 0, 
-            'plotBlueDistMulti': 1, 
+            'plotBlueDistMulti': 0, 
             'plotUVDist': 0, 
             'plotUVDistMulti': 0,
-            'plotUVSimps': 0}
+            'plotUVSimps': 0, 
+            'extra': 0}
 
 
 def readCurrentSweepData():
@@ -112,7 +113,7 @@ def powerPerSolidAngle(powerList):
     sensorArea = np.pi * (9.5e-3 / 2)**2
     distToSensor = 10e-2
     solidAngle = sensorArea / (distToSensor**2)
-    #print(solidAngle)
+    print(solidAngle)
 
     return [point / solidAngle for point in powerList]
 
@@ -407,6 +408,28 @@ def main():
             simpList = simps(anglelistlist, datalistlist)
 
             plotSimps(thiccList, simpList)
+        
+        if settings['extra']:
+            
+            paramsDictList = readParamsData() #noFilter
+            paramsDictList2 = readParamsData() #filter
+            blueDict = readBlueData()
+            angleLists = []
+            powerLists = []
+            stdLists = []
+            i = 0
+            for dic in paramsDictList:
+                np.savetxt(f'filesUVnoFilter{i}.csv', [p for p in zip(interpolateData(dic, 50e-3)[0], powerPerSolidAngle(interpolateData(dic, 50e-3)[1]))], delimiter=',')
+                i += 1
+            i = 0
+            for dic in paramsDictList2:
+                np.savetxt(f'filesUVilter{i}.csv', [p for p in zip(interpolateData(dic, 50e-3)[0], powerPerSolidAngle(interpolateData(dic, 50e-3)[1]))], delimiter=',')
+                i += 1
+            i = 0
+            for l in blueDict:
+                np.savetxt(f'filesBLUEfilter{i}.csv', [p for p in zip(l[0], powerPerSolidAngle(l[1]))], delimiter=',')
+                i += 1
+
     except Exception as e:
         print(e)
 
