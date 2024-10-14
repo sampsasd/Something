@@ -123,7 +123,7 @@ class coatingPlotter:
 
             self.fileLab.config(text=f'File name: {fileName[-10:]}')
             self.finalFLab.config(text=f'Final DeltaF: {self.finalDeltaF:.1f} Hz')
-            self.sDensLab.config(text=f'Surface density: {self.sDens:.3e} g/cm^2')
+            self.sDensLab.config(text=f'Surface density: {self.sDens} g/cm^2')
 
             self.fileBut.configure(state='disabled')
         except Exception as e:

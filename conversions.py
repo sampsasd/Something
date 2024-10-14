@@ -25,7 +25,7 @@ def hertzToSDens(deltaf: float):
 
 def sDensToThicc(dens: float):
     """Give surface density in ug/cm^2, returns thickness in nm"""
-    return dens * 1e-6 / (1.079 * 100) * 1e9
+    return (dens * 1e-6 / (1.079) * 1e9) * 1e-2
 
 #================================================================================================0
 
@@ -44,7 +44,7 @@ def main():
 
     print(eVToLamb(2.5495612))
 
-    print(sDensToThicc(4.96))
+    print(sDensToThicc(155.8))
 
 if __name__ == "__main__":
     main()

@@ -219,6 +219,9 @@ def thirtySixtyCombineUV(paramsDict30, paramsDict60):
     Returns full angle distribution."""
     pass
 
+
+
+
 def plotAngleDistUV(yAxisExp=-7, incAng = None, multi=False):
     """Plots angle distribution for uv and marks incident angle to plot if specified"""
     try:
@@ -320,6 +323,8 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
             return specList
     except Exception as e:
         print(e)
+
+
 
 def simps(angleListList, dataListList):
     simpList = []
