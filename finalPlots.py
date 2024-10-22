@@ -23,12 +23,24 @@ from time import sleep
 #Section of the solid angle distribution at the plane of incident light beam
 
 settings = {'plotCurrentSweep': 0, 
-            'plotBlueDist': 0, 
+            'plotBlueDist': 1, 
             'plotBlueDistMulti': 0, 
+            'plotSpecThic': 0,
+            'plotSpecThicUV': 0,
+            'plotIntegrDiff': 0, 
             'plotUVDist': 0, 
             'plotUVDistMulti': 0,
             'plotUVSimps': 0, 
             'extra': 0}
+
+samples = {'noSample': 0, 
+           '_0725_': 5.0, 
+           '_0618_': 10.4, 
+           '_0724_': 20.2, 
+           '_0701_': 29.7, 
+           '_0625_': 41.4, 
+           '_0920_': 88.1, 
+           '_1002_': 155.8}
 
 
 def readCurrentSweepData():
@@ -63,7 +75,10 @@ def readParamsData():
     fileNameList = askopenfilenames(initialdir='./AppsNshit/DataOrganized')
     dataDictList = []
     for file in fileNameList:
-        dataDictList.append(ReadJson(file))
+        for key in samples:
+            if key in file:
+                thick = samples[key]
+        dataDictList.append((ReadJson(file), thick))
     return dataDictList
 
 def readBlueData():
@@ -71,6 +86,9 @@ def readBlueData():
     dataListList = []
     filename = askopenfilenames(initialdir='./AppsNshit/DataOrganized', filetypes=(('csv files', 'csv'), ))
     for name in filename:
+        for key in samples:
+            if key in name:
+                thic = samples[key]
         with open(name, 'r') as file:
             rows = list(file)
             rows.pop(0)
@@ -95,7 +113,7 @@ def readBlueData():
             measList.append(measTemp[i] - measTemp[i-1])
             stdList.append(stdTemp[i])
             i += 2
-        dataListList.append([refAngleList, measList, stdList])
+        dataListList.append([refAngleList, measList, stdList, thic])
     return dataListList
 
 def saveSum(sDensityList, sumList):
@@ -113,9 +131,10 @@ def powerPerSolidAngle(powerList):
     sensorArea = np.pi * (9.5e-3 / 2)**2
     distToSensor = 10e-2
     solidAngle = sensorArea / (distToSensor**2)
-    print(solidAngle)
+    solidAngleApprox = 0.0071
+    print(solidAngleApprox)
 
-    return [point / solidAngle for point in powerList]
+    return [point / solidAngleApprox for point in powerList]
 
 def filterData(filesDict, filter):
     """Filters current sweep data based on datapoint distance of weighted least squares fit.
@@ -201,15 +220,22 @@ def plotCurrentsweepData(filesDict, filter = None, errorbar = None):
         filesDictFiltered = filterData(filesDict=filesDict, filter=filter)[0]
         poptDict = filterData(filesDict=filesDict, filter=filter)[1]
         currentLin = np.linspace(0, 100e-3, 100)
-        
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        fig.set_size_inches((10, 6))
+        #ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+        #ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1e'))
         for angle in filesDictFiltered:
-            plt.scatter(filesDictFiltered[angle][0], filesDictFiltered[angle][1], marker='o', s=8, label=f'{angle}')
+            ax1.scatter(filesDict[angle][0], filesDict[angle][1], marker='o', s=8, label=f'$\\beta$={angle}'+'$^{\circ}$')
+            ax2.scatter(filesDictFiltered[angle][0], filesDictFiltered[angle][1], marker='o', s=8)
             fit = line(currentLin, poptDict[angle][0][1], poptDict[angle][0][0])
-            plt.plot(currentLin, fit)
+            ax2.plot(currentLin, fit)
 
-    plt.xlabel('Current / A')
-    plt.ylabel('Power / W')
-    plt.legend()
+    ax1.set_xlabel('Current / A')
+    ax1.set_ylabel('Power / W')
+    ax1.legend()
+    ax2.set_xlabel('Current / A')
+    ax2.set_ylabel('Power / W')
+    #ax2.legend()
     plt.tight_layout()
     plt.show()
 
@@ -227,39 +253,77 @@ def plotAngleDistUV(yAxisExp=-7, incAng = None, multi=False):
     """Plots angle distribution for uv and marks incident angle to plot if specified"""
     try:
         if not multi:
-            paramsDict = readParamsData()[0]
+            asd = readParamsData()[0]
+            paramsDict = asd[0]
+            alpha = asd[1]
             angleList = interpolateData(paramsDict, 50e-3)[0]
             powerList = interpolateData(paramsDict, 50e-3)[1]
             stdList = interpolateData(paramsDict, 50e-3)[2]
+            
+            j = angleList.index(50)
+            k = angleList.index(70)
+            angleList.remove(50)
+            angleList.remove(70)
+            powerList.remove(powerList[j])
+            powerList.remove(powerList[k])
+
+            paramsDict2 = readParamsData()[0][0]
+            angleList2 = interpolateData(paramsDict2, 50e-3)[0]
+            powerList2 = interpolateData(paramsDict2, 50e-3)[1]
+            stdList2 = interpolateData(paramsDict2, 50e-3)[2]
 
             powerListSA = powerPerSolidAngle(powerList)
             stdListSA = powerPerSolidAngle(stdList)
 
-            fig, ax = plt.subplots(1, 1)
-            fig.set_size_inches((9, 6))
-            ax.scatter(angleList, powerListSA)
-            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+            powerListSA2 = powerPerSolidAngle(powerList2)
+
+            fig, (ax1, ax2) = plt.subplots(1, 2)
+            fig.set_size_inches((11, 6))
+            ax1.scatter(angleList, powerListSA, marker='o', s=8, c='darkorchid', label=f'$\\alpha$ = {alpha}$^\circ$')
+            ax2.scatter(angleList2, powerListSA2, marker='o', s=8, c='blue', label=f'$\\alpha$ = {alpha}$^\circ$')
+            ax1.xaxis.set_major_locator(ticker.MultipleLocator(base=15))
+            ax2.xaxis.set_major_locator(ticker.MultipleLocator(base=15))
             #ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1e'))
+            ax1.set_xlim(-90, 90)
+            ax2.set_xlim(-90, 90)
+            ax1.set_xlabel('$\\beta$ / deg')
+            ax1.set_ylabel('Radiant intensity / W$\cdot$sr$^{-1}$')
+            ax2.set_xlabel('$\\beta$ / deg')
+            ax2.set_ylabel('Radiant intensity / W$\cdot$sr$^{-1}$')
+            ax1.legend()
+            ax2.legend()
         elif multi:
             paramsDictList = readParamsData()
             angleLists = []
             powerLists = []
             stdLists = []
-            for dic in paramsDictList:
-                angleLists.append(interpolateData(dic, 50e-3)[0])
-                powerLists.append(powerPerSolidAngle(interpolateData(dic, 50e-3)[1]))
-                stdLists.append(powerPerSolidAngle(interpolateData(dic, 50e-3)[2]))
+            thickList = []
+            for tup in paramsDictList:
+                thickList.append(tup[1])
+                angleList = interpolateData(tup[0], 50e-3)[0]
+                powerList = powerPerSolidAngle(interpolateData(tup[0], 50e-3)[1])
+                stdList = powerPerSolidAngle(interpolateData(tup[0], 50e-3)[2])
 
-            fig, ax = plt.subplots(1, 1)
-            fig.set_size_inches((9, 6))
+                angleList, powerList, stdList = zip(*sorted(zip(angleList, powerList, stdList)))
+
+                angleLists.append(interpolateData(tup[0], 50e-3)[0])
+                powerLists.append(powerPerSolidAngle(interpolateData(tup[0], 50e-3)[1]))
+                stdLists.append(powerPerSolidAngle(interpolateData(tup[0], 50e-3)[2]))
+
+            
+
+            fig, ax = plt.subplots(1, 2)
+            fig.set_size_inches((10, 6))
             for i in range(len(angleLists)):
-                ax.scatter(angleLists[i], powerLists[i])
+                ax.scatter(angleLists[i], powerLists[i], s=15, label=f'{thickList[i]}' + ' $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+                #ax.plot(angleLists[i], powerLists[i], label=f'{thickList[i]}' + ' $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
             ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+            plt.xlabel('$\\beta$ / deg')
+            plt.ylabel('Radiant intensity / W$\cdot$sr$^{-1}$')
+            plt.legend()
 
         plt.xlim(-90, 90)
         plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
-        plt.xlabel('$\\beta$ / deg')
-        plt.ylabel('$I$ / W$\cdot$sr$^{-1}$')
         plt.tight_layout()
         plt.show()
 
@@ -271,33 +335,40 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
     try:
         if not multi:
             data = readBlueData()[0]
+            alpha = -data[0][data[1].index(max(data[1]))]
             angleList = data[0]
+            j = angleList.index(70)
+            angleList.remove(70)
             powerList = data[1]
+            powerList.remove(powerList[j])
             stdList = data[2]
 
             powerListSA = powerPerSolidAngle(powerList)
             stdListSA = powerPerSolidAngle(stdList)
 
             fig, ax = plt.subplots(1, 1)
-            fig.set_size_inches((9, 6))
-            ax.scatter(angleList, powerListSA)
+            fig.set_size_inches((10, 6))
+            ax.scatter(angleList, powerListSA, marker='o', s=20, label=f'$\\alpha$ = {alpha}$^\circ$')
             ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
         
         elif multi:
             angleLists = []
             powerLists = []
             stdLists = []
+            thickList = []
 
             datalists = readBlueData()
 
             fig, ax = plt.subplots(1, 1)
-            fig.set_size_inches((9, 6))
+            fig.set_size_inches((10, 6))
             ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
 
             specList = []
             sumList = []
             sumNoSpecList = []
             for dataset in datalists:
+                alpha = -dataset[0][dataset[1].index(max(dataset[1]))]
+                thickList.append(dataset[3])
                 angleList = dataset[0]
                 powerList = powerPerSolidAngle(dataset[1])
                 stdList = powerPerSolidAngle(dataset[2])
@@ -306,7 +377,11 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
                 powerLists.append(powerList)
                 stdLists.append(stdList)
 
-                ax.scatter(angleList, powerList)
+                angleList, powerList, stdList = zip(*sorted(zip(angleList, powerList, stdList)))
+
+                #ax.scatter(angleList, powerList, s=15)
+                ax.scatter(angleList, powerList, marker='o', s=16, label=f'{dataset[3]}' + ' $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+                #plt.plot(angleList, powerList, label=f'{dataset[3]}' + ' $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
                 specList.append(max(dataset[1]))
                 sumList.append(riemannSum(dataset[1]))
                 sumNoSpecList.append(riemannSum(dataset[1], excludeSpecular=True))
@@ -317,7 +392,8 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
         plt.xlim((-90, 90))
         plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
         plt.xlabel('$\\beta$ / deg')
-        plt.ylabel('$I$ / W$\cdot$sr$^{-1}$')
+        plt.ylabel('Radiant intensity / W$\cdot$sr$^{-1}$')
+        #plt.legend()
         plt.tight_layout()
         plt.show()
         if multi:
@@ -330,9 +406,13 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
 def simps(angleListList, dataListList):
     simpList = []
     for i in range(len(dataListList)):
-        simp = simpson(dataListList[i], x=angleListList[i])
+        anglelis = angleListList[i]
+        datalis = dataListList[i]
+        anglelis, datalis = zip(*sorted(zip(anglelis, datalis)))
+        simp = simpson(datalis, x=anglelis)
         simpList.append(simp)
-    simpList.sort()
+        print(anglelis, datalis)
+    #simpList.sort()
     print(simpList)
     return simpList
 
@@ -345,7 +425,7 @@ def plotSimps(thiccList, simpList):
     #plt.xlim((-90, 90))
     #plt.ticklabel_format(axis='y', scilimits=(0, 0))
     plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
-    plt.ylabel('Integral of angle distribution')
+    plt.ylabel('Integrated conversion distribution')
     plt.tight_layout()
     plt.show()
 
@@ -376,8 +456,8 @@ def main():
         #Current sweep
         if settings['plotCurrentSweep']:
             filesDict = readCurrentSweepData()
-            plotCurrentsweepData(filesDict=filesDict)
-            plotCurrentsweepData(filesDict=filesDict, filter=1e-9)
+            #plotCurrentsweepData(filesDict=filesDict)
+            plotCurrentsweepData(filesDict=filesDict, filter=5e-10)
 
         #Angle dist
         if settings['plotBlueDist']:
@@ -401,13 +481,101 @@ def main():
 
         #SIMPS
         if settings['plotUVSimps']:
-            thiccList = [0, 4.96, 10.035, 20.18, 29.74, 41.42, 88.06, 155.8]
+            #thiccList = [0, 4.96, 10.035, 20.18, 29.74, 41.42, 88.06, 155.8]
             plist = readParamsData()
-            anglelistlist = [interpolateData(l, 50e-3)[0] for l in plist]
-            datalistlist = [interpolateData(l, 50e-3)[1] for l in plist]
+            anglelistlist = [interpolateData(l[0], 50e-3)[0] for l in plist]
+            datalistlist = [interpolateData(l[0], 50e-3)[1] for l in plist]
+            thiccList = [l[1] for l in plist]
+            for i in range(len(anglelistlist)):
+                if thiccList[i] == 0:
+                    j = anglelistlist[i].index(-45)
+                    anglelistlist[i].remove(-45)
+                    datalistlist[i].remove(datalistlist[i][j])
+                else:
+                    j = anglelistlist[i].index(-60)
+                    anglelistlist[i].remove(-60)
+                    datalistlist[i].remove(datalistlist[i][j])
             simpList = simps(anglelistlist, datalistlist)
 
             plotSimps(thiccList, simpList)
+        
+        if settings['plotSpecThic']:
+            dataLists30 = readBlueData()
+            thickList30 = []
+            specList30 = []
+            for l in dataLists30:
+                thickList30.append(l[3])
+                specList30.append(max(l[1]))
+            specList30New = [point / max(specList30) for point in specList30]
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            ax.scatter(thickList30, specList30New)
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+            #plt.xlim((-90, 90))
+            #plt.ticklabel_format(axis='y', scilimits=(0, 0))
+            plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+            plt.ylabel('Relative specular reflection')
+            plt.tight_layout()
+            plt.show()
+
+        if settings['plotSpecThicUV']:
+            dataLists30 = readParamsData()
+            thickList30 = []
+            specList30 = []
+            for l in dataLists30:
+                thickList30.append(l[1])
+                specList30.append(max(l[0][1]))
+            specList30New = [point / max(specList30) for point in specList30]
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            ax.scatter(thickList30, specList30New)
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+            #plt.xlim((-90, 90))
+            #plt.ticklabel_format(axis='y', scilimits=(0, 0))
+            plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+            plt.ylabel('Relative specular reflection')
+            plt.tight_layout()
+            plt.show()
+        
+        if settings['plotIntegrDiff']:
+            dataLists60 = readBlueData()
+            thickList60 = []
+            dataList60 = []
+            anglelistlist = []
+            datalistlist = []
+            incAngList = []
+            for l in dataLists60:
+                thickList60.append(l[3])
+                ll = l[1]
+                i = l[1].index(max(l[1]))
+                ll.remove(max(ll))
+                al = l[0]
+                incAngList.append(-al[i])
+                al.remove(al[i])
+                # if l[3] == 0:
+                #     al = l[0]
+                #     al.remove(-45)
+                # else:
+                #     al = l[0]
+                #     al.remove(-60)
+                anglelistlist.append(al)
+                datalistlist.append(ll)
+                
+            dataList60 = simps(anglelistlist, datalistlist)
+            
+            fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((9, 6))
+            ax.scatter(thickList60, dataList60)
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(base=10))
+            #plt.xlim((-90, 90))
+            #plt.ticklabel_format(axis='y', scilimits=(0, 0))
+            #plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+            plt.xlabel('Sample surface density / $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+            plt.ylabel('Integrated diffuse reflection')
+            plt.tight_layout()
+            plt.show()
+
+            
         
         if settings['extra']:
             
