@@ -23,8 +23,8 @@ from time import sleep
 #Section of the solid angle distribution at the plane of incident light beam
 
 settings = {'plotCurrentSweep': 0, 
-            'plotBlueDist': 1, 
-            'plotBlueDistMulti': 0, 
+            'plotBlueDist': 0, 
+            'plotBlueDistMulti': 1, 
             'plotSpecThic': 0,
             'plotSpecThicUV': 0,
             'plotIntegrDiff': 0, 
@@ -41,6 +41,15 @@ samples = {'noSample': 0,
            '_0625_': 41.4, 
            '_0920_': 88.1, 
            '_1002_': 155.8}
+
+samples2 = {'noSample': 'A', 
+           '_0725_': 'B', 
+           '_0618_': 'C', 
+           '_0724_': 'D', 
+           '_0701_': 'E', 
+           '_0625_': 'F', 
+           '_0920_': 'G', 
+           '_1002_': 'H'}
 
 
 def readCurrentSweepData():
@@ -89,6 +98,7 @@ def readBlueData():
         for key in samples:
             if key in name:
                 thic = samples[key]
+                samp = samples2[key]
         with open(name, 'r') as file:
             rows = list(file)
             rows.pop(0)
@@ -113,7 +123,7 @@ def readBlueData():
             measList.append(measTemp[i] - measTemp[i-1])
             stdList.append(stdTemp[i])
             i += 2
-        dataListList.append([refAngleList, measList, stdList, thic])
+        dataListList.append([refAngleList, measList, stdList, thic, samp])
     return dataListList
 
 def saveSum(sDensityList, sumList):
@@ -366,6 +376,7 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
             specList = []
             sumList = []
             sumNoSpecList = []
+            datalists = sorted(datalists, key=lambda x: x[3])
             for dataset in datalists:
                 alpha = -dataset[0][dataset[1].index(max(dataset[1]))]
                 thickList.append(dataset[3])
@@ -380,8 +391,8 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
                 angleList, powerList, stdList = zip(*sorted(zip(angleList, powerList, stdList)))
 
                 #ax.scatter(angleList, powerList, s=15)
-                ax.scatter(angleList, powerList, marker='o', s=16, label=f'{dataset[3]}' + ' $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
-                #plt.plot(angleList, powerList, label=f'{dataset[3]}' + ' $\mathrm{\mu}$g$\cdot$cm$^{-2}$')
+                ax.scatter(angleList, powerList, marker='o', s=16, label='Sample: ' + f'{dataset[4]}')
+                plt.plot(angleList, powerList)
                 specList.append(max(dataset[1]))
                 sumList.append(riemannSum(dataset[1]))
                 sumNoSpecList.append(riemannSum(dataset[1], excludeSpecular=True))
@@ -393,7 +404,7 @@ def plotAngleDistBLUE(yAxisExp=-5, multi=False):
         plt.ticklabel_format(axis='y', scilimits=(yAxisExp, yAxisExp))
         plt.xlabel('$\\beta$ / deg')
         plt.ylabel('Radiant intensity / W$\cdot$sr$^{-1}$')
-        #plt.legend()
+        plt.legend()
         plt.tight_layout()
         plt.show()
         if multi:
@@ -464,7 +475,7 @@ def main():
             plotAngleDistBLUE()
         
         if settings['plotBlueDistMulti']:
-            asd = plotAngleDistBLUE(multi=True)
+            asd = plotAngleDistBLUE(yAxisExp=-3, multi=True)
             qwe = thiccList[::-1]
             if len(asd) == 8:
                 plt.scatter(qwe, asd)
