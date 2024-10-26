@@ -4,6 +4,16 @@ from tkinter.filedialog import askopenfilename, askopenfilenames
 import matplotlib.ticker as ticker
 from scipy import stats
 
+def rsFresnel(x, n1, n2):
+    return abs((n1 * np.cos(x * np.pi / 180) - n2 * np.sqrt(1 - (n1 * np.sin(x * np.pi / 180) / n2)**2)) / 
+               (n1 * np.cos(x * np.pi / 180) + n2 * np.sqrt(1 - (n1 * np.sin(x * np.pi / 180) / n2)**2)))**2
+
+def rpFresnel(x, n1, n2):
+    return abs((n1 * np.sqrt(1 - (n1 * np.sin(x * np.pi / 180) / n2)**2) - n2 * np.cos(x * np.pi / 180)) / 
+               (n1 * np.sqrt(1 - (n1 * np.sin(x * np.pi / 180) / n2)**2) + n2 * np.cos(x * np.pi / 180)))
+
+def fresnelAvg(x, n1, n2):
+    return 0.5 * (rsFresnel(x, n1, n2) + rpFresnel(x, n1, n2))
 
 def line(x, a, b):
     return a * x + b
