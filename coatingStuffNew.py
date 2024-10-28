@@ -133,6 +133,7 @@ class coatingPlotter:
         
         try:
             fig, ax = plt.subplots(1, 1)
+            fig.set_size_inches((10, 6))
             if self.title is not None:
                 fig.suptitle(self.title)
             
